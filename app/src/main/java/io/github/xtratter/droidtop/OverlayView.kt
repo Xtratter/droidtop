@@ -61,6 +61,7 @@ class OverlayView(ctx: Context) : View(ctx) {
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val n = snapshot?.let { top(it).size } ?: 0
         var h = pad * 2 + dp(14f) + dp(32f) + dp(8f) + coresH + dp(12f) + dp(14f) + dp(10f)
+        if (snapshot?.battery?.currentMa?.let { it > 0f } == true) h += dp(20f)
         if (n > 0) h += dp(8f) + n * dp(20f)
         setMeasuredDimension(w.toInt(), h.toInt())
     }
@@ -124,6 +125,17 @@ class OverlayView(ctx: Context) : View(ctx) {
         r.right = pad + (width - 2 * pad) * v[1].coerceIn(0f, 1f)
         p.color = Ui.load(v[1] * 100, 75f, 90f); c.drawRoundRect(r, bh / 2, bh / 2, p)
         y += bh + dp(8f)
+
+        // батарея: мощность и заряд
+        val b = s.battery
+        if (b != null && b.currentMa > 0f) {
+            y += dp(12f)
+            c.drawText(if (b.charging) "⚡ BAT" else "BAT", pad, y, labelP)
+            rightP.color = if (b.charging) Ui.OK else Ui.TEXT
+            c.drawText(String.format(Locale.getDefault(), "%.2f %s · %d%%", b.powerW, context.getString(R.string.u_w), b.level),
+                width - pad, y, rightP)
+            y += dp(8f)
+        }
 
         // топ процессов
         val procs = top(s)

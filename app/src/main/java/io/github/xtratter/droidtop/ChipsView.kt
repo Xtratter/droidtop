@@ -26,14 +26,12 @@ class ChipsView(ctx: Context, attrs: AttributeSet? = null) : View(ctx, attrs) {
         val list = ArrayList<Triple<String, String, Int>>()
         list += Triple(c.getString(R.string.i_tasks), s.procs.size.toString(), Ui.TEXT)
         list += Triple(c.getString(R.string.i_threads), s.threads.toString(), Ui.TEXT)
-        if (s.root) list += Triple(c.getString(R.string.i_running), s.running.toString(), Ui.OK)
+        if (s.full) list += Triple(c.getString(R.string.i_running), s.running.toString(), Ui.OK)
         s.load?.let { l -> list += Triple(c.getString(R.string.i_load), l.joinToString(" · ") { Fmt.load(it) }, Ui.TEXT) }
         val up = s.uptime.toLong()
         val d = up / 86400
         list += Triple(c.getString(R.string.i_uptime),
             (if (d > 0) c.getString(R.string.m_days, d) + " " else "") + Fmt.hms(up), Ui.TEXT)
-        if (!s.batteryTemp.isNaN())
-            list += Triple(c.getString(R.string.i_battery), Fmt.temp(s.batteryTemp), Ui.load(s.batteryTemp, 40f, 45f).let { if (it == Ui.primary) Ui.TEXT else it })
         val relayout = list.size != items.size || list.zip(items).any { (a, b) -> a.second.length != b.second.length }
         items = list
         if (relayout) requestLayout()

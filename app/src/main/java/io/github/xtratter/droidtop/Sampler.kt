@@ -2,10 +2,7 @@ package io.github.xtratter.droidtop
 
 import android.app.ActivityManager
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.os.BatteryManager
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
@@ -61,27 +58,28 @@ object Sampler {
         if (listeners.isNotEmpty()) { ticking = true; tick.run() }
     }
 
-    /** Переключить режим root. [done] получает true, если оболочка открыта в нужном режиме. */
-    fun setRoot(root: Boolean, done: (Boolean) -> Unit) = handler.post {
+    /** Сменить режим доступа. [done] получает true, если оболочка открыта в нужном режиме. */
+    fun setAccess(access: Access, done: (Boolean) -> Unit) = handler.post {
         shell?.close()
-        shell = Shell.open(root) ?: if (root) Shell.open(false) else null
-        parser.reset()
+        shell = null
+        openShell(access)
         labels.clear()
-        val ok = shell?.root == root
+        val ok = shell?.access == access
         main.post { done(ok) }
         refreshNow()
     }
 
-    /** Выполнить команду в текущей оболочке (с root, если он включён). */
+    /** Выполнить команду в текущей оболочке (с root или Shizuku, если они включены). */
     fun exec(cmd: String, done: (String?) -> Unit) = handler.post {
         val out = openShell()?.run(cmd)
         main.post { done(out) }
     }
 
-    private fun openShell(): Shell? {
+    private fun openShell(want: Access = prefs.access()): Shell? {
         shell?.let { return it }
-        shell = (if (prefs.root) Shell.open(true) else null) ?: Shell.open(false)
+        shell = (if (want != Access.USER) Shell.open(want) else null) ?: Shell.open(Access.USER)
         parser.reset()
+        main.post { History.clearProcs() }
         return shell
     }
 
@@ -93,6 +91,7 @@ object Sampler {
             if (s != null) {
                 main.post {
                     last = s
+                    History.add(s)
                     listeners.forEach { it.onSnapshot(s) }
                 }
                 // значки приложений грузим после показа, чтобы не задерживать первый кадр
@@ -113,9 +112,10 @@ object Sampler {
         val am = app.getSystemService(ActivityManager::class.java)
         val mi = ActivityManager.MemoryInfo().also { am.getMemoryInfo(it) }
         val snap = parser.parse(
-            out, sh.root, SystemClock.elapsedRealtime() / 1000.0,
-            longArrayOf(mi.totalMem, mi.availMem), batteryTemp(),
+            out, sh.access, SystemClock.elapsedRealtime() / 1000.0,
+            longArrayOf(mi.totalMem, mi.availMem),
         )
+        snap.battery = try { Battery.read(app) } catch (e: Exception) { null }
 
         val missing = parser.missingNames(snap.procs)
         val psOut = if (missing.isNotEmpty()) sh.run(parser.psCommand(missing)) else null
@@ -139,11 +139,5 @@ object Sampler {
         } catch (e: PackageManager.NameNotFoundException) {
             null
         }
-    }
-
-    private fun batteryTemp(): Float {
-        val i = app.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) ?: return Float.NaN
-        val t = i.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE)
-        return if (t == Int.MIN_VALUE) Float.NaN else t / 10f
     }
 }

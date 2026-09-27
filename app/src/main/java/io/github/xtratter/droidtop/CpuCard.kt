@@ -6,7 +6,9 @@ import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.Shader
+import android.annotation.SuppressLint
 import android.util.AttributeSet
+import android.view.MotionEvent
 import android.view.View
 import java.util.Locale
 
@@ -27,6 +29,8 @@ class CpuCard(ctx: Context, attrs: AttributeSet? = null) : View(ctx, attrs) {
     private val smooth = Smooth(this)
     private var barShader: Shader? = null
     private var s: Snapshot? = null
+    private val chart = Chart(this)
+    private val chartH = dp(64f)
 
     init {
         background = GlassDrawable(ctx, 28f)
@@ -39,6 +43,9 @@ class CpuCard(ctx: Context, attrs: AttributeSet? = null) : View(ctx, attrs) {
         v[0] = if (!snap.cpu.isNaN()) snap.cpu else (snap.cores.maxOfOrNull { it.freqKHz } ?: 0L).toFloat()
         snap.cores.forEachIndexed { i, c -> v[i + 1] = frac(c) }
         smooth.set(v)
+        chart.values = History.cpu.toArray()
+        chart.color = Ui.primary
+        chart.format = if (snap.cpu.isNaN()) { x -> Fmt.pct(x) + "% " + context.getString(R.string.ch_of_max) } else { x -> Fmt.pct(x) + "%" }
     }
 
     private fun frac(c: CoreInfo) = when {
@@ -48,7 +55,7 @@ class CpuCard(ctx: Context, attrs: AttributeSet? = null) : View(ctx, attrs) {
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val h = pad * 2 + dp(18f) + dp(56f) + dp(20f) + barsH + dp(22f)
+        val h = pad * 2 + dp(18f) + dp(56f) + dp(20f) + dp(22f) + chartH + dp(14f) + barsH + dp(22f)
         setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), h.toInt())
     }
 
@@ -95,9 +102,13 @@ class CpuCard(ctx: Context, attrs: AttributeSet? = null) : View(ctx, attrs) {
             c.drawText(res.getString(R.string.c_freq_only), pad, y, smallP)
         }
 
+        // история загрузки
+        val top = height - pad - dp(22f) - barsH
+        chart.rect.set(pad, top - dp(14f) - chartH, width - pad, top - dp(14f))
+        chart.draw(c)
+
         // столбики ядер
         val n = snap.cores.size
-        val top = height - pad - dp(22f) - barsH
         val gap = if (n > 12) dp(4f) else dp(8f)
         val bw = (width - 2 * pad - gap * (n - 1)) / n
         val rad = minOf(bw / 2, dp(12f))
@@ -128,4 +139,7 @@ class CpuCard(ctx: Context, attrs: AttributeSet? = null) : View(ctx, attrs) {
         c.drawText(text, r.left + dp(10f), r.centerY() - (chipP.ascent() + chipP.descent()) / 2, chipP)
         return r.left - dp(6f)
     }
+
+    @SuppressLint("ClickableViewAccessibility")
+    override fun onTouchEvent(e: MotionEvent) = chart.onTouch(e) || super.onTouchEvent(e)
 }

@@ -30,7 +30,7 @@ class ProcInfo(
 }
 
 class Snapshot(
-    val root: Boolean,
+    val access: Access,
     val cores: List<CoreInfo>,
     /** Общая загрузка CPU в %, NaN — недоступна без root. */
     val cpu: Float,
@@ -43,11 +43,15 @@ class Snapshot(
     val uptime: Double,
     val procs: List<ProcInfo>,
     val cpuTemp: Float,
-    val batteryTemp: Float,
     val clkTck: Long,
     /** Сколько задач сейчас в очереди на CPU (из /proc/loadavg), -1 — неизвестно. */
     runningTasks: Int = -1,
 ) {
+    val root get() = access == Access.ROOT
+    /** Видим все процессы и загрузку CPU (root или Shizuku). */
+    val full get() = access != Access.USER
+    var battery: Battery? = null
+    val batteryTemp get() = battery?.temp ?: Float.NaN
     val threads = procs.sumOf { it.threads }
     val running = if (runningTasks >= 0) runningTasks else procs.count { it.state == 'R' }
 }

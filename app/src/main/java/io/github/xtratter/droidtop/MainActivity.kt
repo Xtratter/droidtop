@@ -28,6 +28,11 @@ import android.widget.TextView
 import android.widget.Toast
 
 class MainActivity : Activity(), Sampler.Listener {
+    private companion object {
+        const val REQ_SHIZUKU = 42
+        const val SHIZUKU_PKG = "moe.shizuku.privileged.api"
+    }
+
     private lateinit var prefs: Prefs
     private lateinit var table: Table
     private lateinit var list: ListView
@@ -38,7 +43,7 @@ class MainActivity : Activity(), Sampler.Listener {
     private lateinit var searchBox: View
     private lateinit var searchField: EditText
     private lateinit var topScrim: View
-    private var shownRoot: Boolean? = null
+    private var shownAccess: Access? = null
     private var shownHint = -1
     /** Свёрнутые ветки дерева (PID). */
     private val collapsed = HashSet<Int>()
@@ -48,6 +53,7 @@ class MainActivity : Activity(), Sampler.Listener {
     private lateinit var hint: TextView
     private lateinit var cpuCard: CpuCard
     private lateinit var memCard: MemCard
+    private lateinit var batteryCard: BatteryCard
     private lateinit var chips: ChipsView
     private lateinit var meters: MetersView
     private lateinit var procsTitle: TextView
@@ -165,7 +171,7 @@ class MainActivity : Activity(), Sampler.Listener {
             btnOverlay.postDelayed({ updateButtons() }, 300)
         }
         findViewById<View>(R.id.btnMore).setOnClickListener { showMenu(it) }
-        modeChip.setOnClickListener { if (snapshot?.root != true) setRoot(true) }
+        modeChip.setOnClickListener { showAccessDialog() }
         searchField.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
             override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
@@ -202,10 +208,11 @@ class MainActivity : Activity(), Sampler.Listener {
             textSize = 13.5f
             setLineSpacing(0f, 1.15f)
             foreground = Ui.ripple(this@MainActivity, 24f)
-            setOnClickListener { setRoot(true) }
+            setOnClickListener { showAccessDialog() }
         })
         cpuCard = add(CpuCard(this))
         memCard = add(MemCard(this))
+        batteryCard = add(BatteryCard(this))
         chips = add(ChipsView(this), 18f)
         meters = add(MetersView(this, null).apply {
             background = GlassDrawable(this@MainActivity, 24f)
@@ -244,6 +251,7 @@ class MainActivity : Activity(), Sampler.Listener {
         val t = prefs.tableMode
         cpuCard.visibility = if (t) View.GONE else View.VISIBLE
         memCard.visibility = cpuCard.visibility
+        batteryCard.visibility = cpuCard.visibility
         chips.visibility = cpuCard.visibility
         sortScroll.visibility = cpuCard.visibility
         meters.visibility = if (t) View.VISIBLE else View.GONE
@@ -287,19 +295,27 @@ class MainActivity : Activity(), Sampler.Listener {
     private fun render() {
         val s = snapshot ?: return
         // текст и фон меняем только при изменении: любой setText в шапке списка перераскладывает весь список
-        if (shownRoot != s.root) {
-            shownRoot = s.root
-            modeChip.setText(if (s.root) R.string.mode_root else R.string.mode_user)
-            val chipColor = if (s.root) Ui.OK else Ui.WARN
+        if (shownAccess != s.access) {
+            shownAccess = s.access
+            modeChip.setText(when (s.access) {
+                Access.ROOT -> R.string.mode_root
+                Access.SHIZUKU -> R.string.mode_shizuku
+                Access.USER -> R.string.mode_user
+            })
+            val chipColor = if (s.full) Ui.OK else Ui.WARN
             modeChip.setTextColor(chipColor)
             modeChip.background = Ui.pill(this, Ui.withAlpha(chipColor, 0.16f), Ui.withAlpha(chipColor, 0.35f))
-            hint.visibility = if (s.root) View.GONE else View.VISIBLE
+            hint.visibility = if (s.full) View.GONE else View.VISIBLE
         }
-        val hintRes = if (prefs.root) R.string.hint_root_denied else R.string.hint_no_root
+        val hintRes = when (prefs.access()) {
+            Access.ROOT -> R.string.hint_root_denied
+            Access.SHIZUKU -> R.string.hint_shizuku_denied
+            Access.USER -> R.string.hint_no_root
+        }
         if (shownHint != hintRes) { shownHint = hintRes; hint.setText(hintRes) }
 
         if (prefs.tableMode) meters.snapshot = s
-        else { cpuCard.update(s); memCard.update(s); chips.update(s) }
+        else { cpuCard.update(s); memCard.update(s); batteryCard.update(s); chips.update(s) }
 
         val q = filter.trim().lowercase()
         val showKernel = prefs.kernelThreads
@@ -350,11 +366,10 @@ class MainActivity : Activity(), Sampler.Listener {
     private fun showMenu(anchor: View) {
         val pm = PopupMenu(this, anchor, Gravity.END)
         pm.menuInflater.inflate(R.menu.main, pm.menu)
-        pm.menu.findItem(R.id.root).isChecked = prefs.root
         pm.menu.findItem(R.id.view_mode).isChecked = prefs.tableMode
         pm.setOnMenuItemClickListener { item ->
             when (item.itemId) {
-                R.id.root -> setRoot(!prefs.root)
+                R.id.root -> showAccessDialog()
                 R.id.view_mode -> { prefs.tableMode = !prefs.tableMode; applyPrefs() }
                 R.id.settings -> SettingsDialog.show(this, prefs)
                 R.id.about -> showAbout()
@@ -364,11 +379,81 @@ class MainActivity : Activity(), Sampler.Listener {
         pm.show()
     }
 
-    private fun setRoot(root: Boolean) {
-        prefs.root = root
-        if (root) Toast.makeText(this, R.string.root_asking, Toast.LENGTH_SHORT).show()
-        Sampler.setRoot(root) { ok ->
-            if (root && !ok) Toast.makeText(this, R.string.root_failed, Toast.LENGTH_LONG).show()
+    /** Выбор режима доступа: обычный, Shizuku или root. */
+    private fun showAccessDialog() {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20f), dp(8f), dp(20f), 0)
+        }
+        val d = AlertDialog.Builder(this)
+            .setTitle(R.string.access_title)
+            .setView(android.widget.ScrollView(this).apply { addView(box) })
+            .setNegativeButton(android.R.string.cancel, null)
+            .create()
+        val current = prefs.access()
+        for ((mode, title, desc) in listOf(
+            Triple(Access.USER, R.string.access_user, R.string.access_user_desc),
+            Triple(Access.SHIZUKU, R.string.access_shizuku, R.string.access_shizuku_desc),
+            Triple(Access.ROOT, R.string.access_root, R.string.access_root_desc),
+        )) {
+            val sel = mode == current
+            box.addView(LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(dp(18f), dp(12f), dp(18f), dp(14f))
+                background = if (sel) Ui.pill(this@MainActivity, Ui.withAlpha(Ui.primary, 0.16f), Ui.primary, 20f)
+                else GlassDrawable(this@MainActivity, 20f)
+                foreground = Ui.ripple(this@MainActivity, 20f)
+                addView(TextView(this@MainActivity).apply {
+                    setText(title); textSize = 16f; typeface = Ui.medium
+                    setTextColor(if (sel) Ui.primary else Ui.TEXT)
+                })
+                addView(TextView(this@MainActivity).apply {
+                    setText(desc); textSize = 13f; setTextColor(Ui.TEXT2); setLineSpacing(0f, 1.1f)
+                })
+                setOnClickListener { d.dismiss(); chooseAccess(mode) }
+            }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(8f) })
+        }
+        d.show()
+        Ui.glassDialog(d)
+    }
+
+    private fun chooseAccess(mode: Access) {
+        if (mode != Access.SHIZUKU) return applyAccess(mode)
+        val alive = try { rikka.shizuku.Shizuku.pingBinder() && !rikka.shizuku.Shizuku.isPreV11() } catch (e: Exception) { false }
+        if (!alive) return showShizukuMissing()
+        if (Shell.shizukuReady()) return applyAccess(mode)
+        rikka.shizuku.Shizuku.addRequestPermissionResultListener(object : rikka.shizuku.Shizuku.OnRequestPermissionResultListener {
+            override fun onRequestPermissionResult(requestCode: Int, grantResult: Int) {
+                if (requestCode != REQ_SHIZUKU) return
+                rikka.shizuku.Shizuku.removeRequestPermissionResultListener(this)
+                if (grantResult == PackageManager.PERMISSION_GRANTED) applyAccess(Access.SHIZUKU)
+                else Toast.makeText(this@MainActivity, R.string.shizuku_denied, Toast.LENGTH_LONG).show()
+            }
+        })
+        rikka.shizuku.Shizuku.requestPermission(REQ_SHIZUKU)
+    }
+
+    private fun showShizukuMissing() {
+        val launch = packageManager.getLaunchIntentForPackage(SHIZUKU_PKG)
+        val d = AlertDialog.Builder(this)
+            .setTitle(R.string.access_shizuku)
+            .setMessage(if (launch != null) R.string.shizuku_not_running else R.string.shizuku_not_installed)
+            .setPositiveButton(if (launch != null) R.string.shizuku_open else R.string.shizuku_get) { _, _ ->
+                startActivity(launch ?: Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/download/")))
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+        Ui.glassDialog(d)
+    }
+
+    private fun applyAccess(mode: Access) {
+        prefs.setAccess(mode)
+        if (mode != Access.USER) Toast.makeText(this, R.string.access_asking, Toast.LENGTH_SHORT).show()
+        Sampler.setAccess(mode) { ok ->
+            if (!ok) Toast.makeText(this,
+                if (mode == Access.ROOT) R.string.root_failed else R.string.shizuku_failed, Toast.LENGTH_LONG).show()
+            shownHint = -1
+            render()
         }
     }
 

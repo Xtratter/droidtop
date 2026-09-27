@@ -36,7 +36,7 @@ class ProcParser(private val pageSize: Long, private val clkTck: Long) {
      * Разобрать вывод [script].
      * [memFallback] — {всего, доступно} от ActivityManager на случай, если /proc/meminfo закрыт.
      */
-    fun parse(out: String, root: Boolean, uptimeFallback: Double, memFallback: LongArray, batteryTemp: Float): Snapshot {
+    fun parse(out: String, access: Access, uptimeFallback: Double, memFallback: LongArray): Snapshot {
         val sec = HashMap<Char, MutableList<String>>()
         var cur: MutableList<String>? = null
         for (line in out.split('\n')) {
@@ -116,11 +116,11 @@ class ProcParser(private val pageSize: Long, private val clkTck: Long) {
         prevUptime = uptime
 
         return Snapshot(
-            root = root, cores = cores, cpu = cpuTotal,
+            access = access, cores = cores, cpu = cpuTotal,
             memTotal = memTotal, memAvail = memAvail, memFree = memFree,
             swapTotal = mi["SwapTotal"] ?: 0L, swapFree = mi["SwapFree"] ?: 0L,
             load = load, uptime = uptime, procs = procs,
-            cpuTemp = cpuTemp, batteryTemp = batteryTemp, clkTck = clkTck, runningTasks = runningTasks,
+            cpuTemp = cpuTemp, clkTck = clkTck, runningTasks = runningTasks,
         )
     }
 

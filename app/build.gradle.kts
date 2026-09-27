@@ -11,8 +11,8 @@ android {
         applicationId = "io.github.xtratter.droidtop"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.2"
+        versionCode = 4
+        versionName = "1.3"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -22,5 +22,8 @@ android {
 }
 
 dependencies {
+    // Shizuku: права ADB (shell) без root — https://github.com/RikkaApps/Shizuku-API
+    implementation("dev.rikka.shizuku:api:13.1.5")
+    implementation("dev.rikka.shizuku:provider:13.1.5")
     testImplementation("junit:junit:4.13.2")
 }

@@ -4,7 +4,6 @@
     <string name="pause">Пауза</string>
     <string name="resume">Продолжить</string>
     <string name="overlay">Плавающий оверлей</string>
-    <string name="root_mode">Режим root</string>
     <string name="settings">Настройки</string>
     <string name="about">О программе</string>
     <string name="close">Закрыть</string>
@@ -14,9 +13,8 @@
 
     <string name="mode_root">root</string>
     <string name="mode_user">без root</string>
-    <string name="hint_no_root">Без root Android показывает приложению только его собственные процессы, а загрузка CPU скрыта. Нажмите сюда или ⋮ → «Режим root», чтобы видеть всё.</string>
+    <string name="hint_no_root">Без root или Shizuku Android показывает приложению только его собственные процессы, а загрузка CPU скрыта. Нажмите сюда, чтобы выбрать режим доступа.</string>
     <string name="hint_root_denied">Доступ root не выдан. Разрешите DroidTop в KernelSU / Magisk / APatch и нажмите сюда, чтобы попробовать снова.</string>
-    <string name="root_asking">Запрашиваю доступ root…</string>
     <string name="root_failed">Root недоступен — работаю без него</string>
 
     <string name="m_tasks">Задачи:</string>
@@ -95,7 +93,6 @@
     <string name="i_running">Активны</string>
     <string name="i_load">Нагрузка</string>
     <string name="i_uptime">Работает</string>
-    <string name="i_battery">Батарея</string>
     <string name="sort_cpu">CPU</string>
     <string name="sort_mem">Память</string>
     <string name="sort_time">Время CPU</string>
@@ -114,4 +111,37 @@
     <string name="d_more">…и ещё %1$d</string>
     <string name="act_collapse">Свернуть ветку</string>
     <string name="act_expand">Развернуть ветку</string>
+
+    <string name="ch_span">за %1$d мин</string>
+    <string name="ch_collecting">Собираю данные…</string>
+    <string name="ch_now">сейчас</string>
+    <string name="ch_ago">%1$s назад</string>
+    <string name="ch_of_max">от макс. частоты</string>
+    <string name="ch_proc_cpu">Загрузка CPU</string>
+    <string name="ch_proc_mem">Память (RES)</string>
+    <string name="c_battery">Батарея</string>
+    <string name="b_charging">⚡ Зарядка</string>
+    <string name="b_plugged">От сети</string>
+    <string name="b_discharging">Разряд</string>
+    <string name="u_w">Вт</string>
+    <string name="u_v">В</string>
+    <string name="b_ma">%1$d мА</string>
+    <string name="b_full_in">до полного %1$s</string>
+    <string name="b_left">осталось ≈ %1$s</string>
+    <string name="mode_shizuku">Shizuku</string>
+    <string name="hint_shizuku_denied">Shizuku недоступен. Запустите Shizuku и разрешите DroidTop, затем нажмите сюда, чтобы попробовать снова.</string>
+    <string name="access_title">Режим доступа</string>
+    <string name="access_user">Обычный</string>
+    <string name="access_user_desc">Без особых прав. Память, частоты ядер, температуры и батарея — но без списка процессов и загрузки CPU.</string>
+    <string name="access_shizuku">Shizuku (без root)</string>
+    <string name="access_shizuku_desc">Права ADB через приложение Shizuku: все процессы и загрузка CPU. Завершать процессы чужих приложений нельзя, остановка приложений работает.</string>
+    <string name="access_root">Root</string>
+    <string name="access_root_desc">Полный доступ через KernelSU / Magisk / APatch: всё, включая завершение любых процессов.</string>
+    <string name="access_asking">Запрашиваю доступ…</string>
+    <string name="shizuku_denied">Shizuku не дал разрешение</string>
+    <string name="shizuku_not_running">Shizuku установлен, но не запущен. Откройте его и запустите службу (через беспроводную отладку или root), затем снова выберите этот режим.</string>
+    <string name="shizuku_not_installed">Для этого режима нужно бесплатное приложение Shizuku. Установите его, запустите службу через беспроводную отладку и снова выберите этот режим.</string>
+    <string name="shizuku_open">Открыть Shizuku</string>
+    <string name="shizuku_get">Скачать Shizuku</string>
+    <string name="shizuku_failed">Не удалось запуститься через Shizuku — работаю без него</string>
 </resources>

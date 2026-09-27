@@ -5,7 +5,6 @@
     <string name="pause">Pause</string>
     <string name="resume">Resume</string>
     <string name="overlay">Floating overlay</string>
-    <string name="root_mode">Root mode</string>
     <string name="settings">Settings</string>
     <string name="about">About</string>
     <string name="close">Close</string>
@@ -15,9 +14,8 @@
 
     <string name="mode_root">root</string>
     <string name="mode_user">no root</string>
-    <string name="hint_no_root">Without root Android shows an app only its own processes, and CPU load is hidden. Tap here or use ⋮ → «Root mode» to see everything.</string>
+    <string name="hint_no_root">Without root or Shizuku Android shows an app only its own processes, and CPU load is hidden. Tap here to choose an access mode.</string>
     <string name="hint_root_denied">Root access was not granted. Allow DroidTop in KernelSU / Magisk / APatch, then tap here to try again.</string>
-    <string name="root_asking">Requesting root access…</string>
     <string name="root_failed">Root is not available — working without it</string>
 
     <string name="m_tasks">Tasks:</string>
@@ -96,7 +94,6 @@
     <string name="i_running">Running</string>
     <string name="i_load">Load</string>
     <string name="i_uptime">Uptime</string>
-    <string name="i_battery">Battery</string>
     <string name="sort_cpu">CPU</string>
     <string name="sort_mem">Memory</string>
     <string name="sort_time">CPU time</string>
@@ -115,4 +112,37 @@
     <string name="d_more">…and %1$d more</string>
     <string name="act_collapse">Collapse branch</string>
     <string name="act_expand">Expand branch</string>
+
+    <string name="ch_span">last %1$d min</string>
+    <string name="ch_collecting">Collecting data…</string>
+    <string name="ch_now">now</string>
+    <string name="ch_ago">%1$s ago</string>
+    <string name="ch_of_max">of max freq</string>
+    <string name="ch_proc_cpu">CPU load</string>
+    <string name="ch_proc_mem">Memory (RES)</string>
+    <string name="c_battery">Battery</string>
+    <string name="b_charging">⚡ Charging</string>
+    <string name="b_plugged">On power</string>
+    <string name="b_discharging">Discharging</string>
+    <string name="u_w">W</string>
+    <string name="u_v">V</string>
+    <string name="b_ma">%1$d mA</string>
+    <string name="b_full_in">full in %1$s</string>
+    <string name="b_left">≈ %1$s left</string>
+    <string name="mode_shizuku">Shizuku</string>
+    <string name="hint_shizuku_denied">Shizuku is not available. Start Shizuku and allow DroidTop, then tap here to try again.</string>
+    <string name="access_title">Access mode</string>
+    <string name="access_user">Normal</string>
+    <string name="access_user_desc">No extra permissions. Memory, core frequencies, temperatures and battery — but no process list or CPU load.</string>
+    <string name="access_shizuku">Shizuku (no root)</string>
+    <string name="access_shizuku_desc">ADB-level access through the Shizuku app: all processes and CPU load. Killing other apps’ processes is not allowed, force stop works.</string>
+    <string name="access_root">Root</string>
+    <string name="access_root_desc">Full access via KernelSU / Magisk / APatch: everything, including killing any process.</string>
+    <string name="access_asking">Requesting access…</string>
+    <string name="shizuku_denied">Shizuku permission was denied</string>
+    <string name="shizuku_not_running">Shizuku is installed but not running. Open it and start the service (wireless debugging or root), then choose this mode again.</string>
+    <string name="shizuku_not_installed">This mode needs the free Shizuku app. Install it, start the service via wireless debugging, then choose this mode again.</string>
+    <string name="shizuku_open">Open Shizuku</string>
+    <string name="shizuku_get">Get Shizuku</string>
+    <string name="shizuku_failed">Could not start via Shizuku — working without it</string>
 </resources>

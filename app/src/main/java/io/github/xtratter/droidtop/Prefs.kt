@@ -8,7 +8,14 @@ import kotlin.reflect.KProperty
 class Prefs(ctx: Context) {
     private val sp = ctx.applicationContext.getSharedPreferences("prefs", Context.MODE_PRIVATE)
 
-    var root by bool("root", false)
+    /** Устаревшая настройка 1.0–1.2; теперь — [access]. */
+    private var root by bool("root", false)
+    private var accessName by str("access", "")
+
+    fun access(): Access = runCatching { Access.valueOf(accessName) }
+        .getOrDefault(if (root) Access.ROOT else Access.USER)
+
+    fun setAccess(a: Access) { accessName = a.name }
     var intervalMs by int("interval_ms", 2000)
     var kernelThreads by bool("kernel_threads", false)
     var appLabels by bool("app_labels", true)

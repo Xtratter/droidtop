@@ -6,7 +6,9 @@ import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.Shader
+import android.annotation.SuppressLint
 import android.util.AttributeSet
+import android.view.MotionEvent
 import android.view.View
 import java.util.Locale
 
@@ -24,6 +26,8 @@ class MemCard(ctx: Context, attrs: AttributeSet? = null) : View(ctx, attrs) {
     private val smooth = Smooth(this)
     private var usedShader: Shader? = null
     private var s: Snapshot? = null
+    private val chart = Chart(this).apply { color = Ui.tertiary }
+    private val chartH = dp(48f)
 
     init {
         background = GlassDrawable(ctx, 28f)
@@ -38,12 +42,13 @@ class MemCard(ctx: Context, attrs: AttributeSet? = null) : View(ctx, attrs) {
         val cache = (snap.memAvail - snap.memFree).coerceAtLeast(0) / t
         val swap = if (snap.swapTotal > 0) (snap.swapTotal - snap.swapFree).toFloat() / snap.swapTotal else 0f
         smooth.set(floatArrayOf(used, cache, swap))
+        chart.values = History.mem.toArray()
     }
 
     private val hasSwap get() = (s?.swapTotal ?: 0) > 0
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        var h = pad * 2 + dp(18f) + dp(38f) + dp(14f) + dp(16f) + dp(18f)
+        var h = pad * 2 + dp(18f) + dp(38f) + dp(14f) + dp(16f) + dp(18f) + dp(26f) + chartH
         if (hasSwap) h += dp(40f)
         setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), h.toInt())
     }
@@ -91,6 +96,11 @@ class MemCard(ctx: Context, attrs: AttributeSet? = null) : View(ctx, attrs) {
         x = legend(c, x, y, Ui.withAlpha(Ui.secondary, 0.6f), ctx.getString(R.string.c_cache, Human.size(ctx, (snap.memAvail - snap.memFree).coerceAtLeast(0))))
         legend(c, x, y, Ui.TRACK or 0x30000000, ctx.getString(R.string.c_free, Human.size(ctx, snap.memFree)))
 
+        // история занятой памяти
+        chart.rect.set(pad, y + dp(26f), width - pad, y + dp(26f) + chartH)
+        chart.draw(c)
+        y += dp(26f) + chartH
+
         if (hasSwap) {
             y += dp(26f)
             c.drawText(ctx.getString(R.string.c_swap), pad, y, labelP)
@@ -120,4 +130,7 @@ class MemCard(ctx: Context, attrs: AttributeSet? = null) : View(ctx, attrs) {
         c.drawText(text, x + dp(12f), y, smallP)
         return x + dp(12f) + smallP.measureText(text) + dp(14f)
     }
+
+    @SuppressLint("ClickableViewAccessibility")
+    override fun onTouchEvent(e: MotionEvent) = chart.onTouch(e) || super.onTouchEvent(e)
 }

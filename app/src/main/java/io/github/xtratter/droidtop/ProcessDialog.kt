@@ -74,6 +74,24 @@ object ProcessDialog {
         ), LinearLayout.LayoutParams(-1, -2).apply { topMargin = px(8f) })
         box.addView(grid)
 
+        // история процесса — обновляется, пока диалог открыт
+        val cpuChart = ChartView(a, a.getString(R.string.ch_proc_cpu)).apply {
+            chart.autoMax = true; chart.maxY = 5f
+        }
+        val memChart = ChartView(a, a.getString(R.string.ch_proc_mem)).apply {
+            chart.autoMax = true; chart.maxY = 1f; chart.color = Ui.tertiary
+            chart.format = { Human.size(a, (it * 1048576).toLong()) }
+        }
+        fun fillCharts() {
+            val h = History.proc(p) ?: return
+            cpuChart.chart.values = h.cpu.toArray(); cpuChart.invalidate()
+            memChart.chart.values = h.rss.toArray(); memChart.invalidate()
+        }
+        fillCharts()
+        box.addView(cpuChart, LinearLayout.LayoutParams(-1, -2).apply { topMargin = px(8f) })
+        box.addView(memChart)
+        val live = Sampler.Listener { fillCharts() }
+
         // родитель и потомки — нажатие открывает их карточку
         var dlg: AlertDialog? = null
         fun section(text: String) = box.addView(TextView(a).apply {
@@ -139,6 +157,8 @@ object ProcessDialog {
             .setNegativeButton(R.string.close, null)
             .create()
         dlg = dialog
+        Sampler.add(live)
+        dialog.setOnDismissListener { Sampler.remove(live) }
 
         // действия — тональные кнопки-«пилюли»
         fun action(text: Int, danger: Boolean = false, block: () -> Unit) {
@@ -164,7 +184,7 @@ object ProcessDialog {
         else action(R.string.act_stop) { signal(a, p, "STOP") }
         val pkg = p.pkg
         if (pkg != null) {
-            if (s.root) action(R.string.act_force_stop, danger = true) {
+            if (s.full) action(R.string.act_force_stop, danger = true) {
                 run(a, "am force-stop $pkg", a.getString(R.string.done_force_stop, p.label ?: pkg))
             }
             action(R.string.act_app_info) {

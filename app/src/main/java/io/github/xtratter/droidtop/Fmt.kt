@@ -37,6 +37,8 @@ object Fmt {
     fun temp(t: Float): String = f("%.0f°C", t)
 
     fun load(v: Float): String = f("%.2f", v)
+
+    fun watts(v: Float): String = if (v < 10f) f("%.2f W", v) else f("%.1f W", v)
 }
 
 /** Размеры и частоты с единицами на языке интерфейса — для карточек. */
@@ -47,6 +49,16 @@ object Human {
         else String.format(Locale.getDefault(), "%.2f %s", m / 1024, ctx.getString(R.string.u_gb))
     }
 
+    /** «40 с» или «3 мин» назад. */
+    fun ago(ctx: android.content.Context, sec: Int): String =
+        if (sec < 60) ctx.getString(R.string.dur_s, sec.toLong()) else ctx.getString(R.string.dur_m, (sec / 60).toLong())
+
     fun ghz(ctx: android.content.Context, khz: Long) =
         String.format(Locale.getDefault(), "%.2f %s", khz / 1e6, ctx.getString(R.string.u_ghz))
+}
+
+object HumanTime {
+    fun duration(ctx: android.content.Context, minutes: Int): String =
+        if (minutes < 60) ctx.getString(R.string.dur_m, minutes.toLong())
+        else ctx.getString(R.string.dur_hm, (minutes / 60).toLong(), (minutes % 60).toLong())
 }

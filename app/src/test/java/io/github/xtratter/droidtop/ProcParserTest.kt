@@ -35,8 +35,8 @@ class ProcParserTest {
             |777 (Binder:ab (x) c) R 1 777 0 0 -1 0 0 0 0 0 ${ticks} 0 0 0 10 -10 42 0 900 5000 2500 0
             |""".trimMargin()
 
-        p.parse(out("100.00", 1000, 9000), true, 0.0, fallbackMem, Float.NaN)
-        val s = p.parse(out("102.00", 1100, 9100), true, 0.0, fallbackMem, 30f)
+        p.parse(out("100.00", 1000, 9000), Access.ROOT, 0.0, fallbackMem)
+        val s = p.parse(out("102.00", 1100, 9100), Access.ROOT, 0.0, fallbackMem)
 
         assertEquals(2, s.procs.size)
         val b = s.procs.first { it.pid == 777 }
@@ -58,7 +58,7 @@ class ProcParserTest {
     fun appliesNamesFromPs() {
         val p = ProcParser(4096, 100)
         val s = p.parse("@P\n5 (d.process.gms) S 1 5 0 0 -1 0 0 0 0 0 1 1 0 0 20 0 30 0 77 1 1 0\n",
-            false, 1.0, fallbackMem, Float.NaN)
+            Access.USER, 1.0, fallbackMem)
         val missing = p.missingNames(s.procs)
         assertEquals(listOf(5), missing)
         p.applyNames("  PID USER     NAME\n    5 u0_a120  com.google.android.gms.persistent\n", s.procs, missing)
@@ -76,9 +76,9 @@ class ProcParserTest {
             val pr = ProcessBuilder("sh", "-c", p.script()).redirectErrorStream(false).start()
             return pr.inputStream.bufferedReader().readText().also { pr.waitFor() }
         }
-        p.parse(sample(), false, 1.0, fallbackMem, Float.NaN)
+        p.parse(sample(), Access.USER, 1.0, fallbackMem)
         Thread.sleep(300)
-        val s = p.parse(sample(), false, 2.0, fallbackMem, Float.NaN)
+        val s = p.parse(sample(), Access.USER, 2.0, fallbackMem)
         println("procs=${s.procs.size} mem=${Fmt.size(s.memTotal)} cores=${s.cores.size} " +
             "freq=${s.cores.map { it.freqKHz }} temp=${s.cpuTemp} load=${s.load?.toList()}")
         println(s.procs.sortedByDescending { it.cpu }.take(5).joinToString("\n") { "${it.pid} ${it.comm} ${it.cpu}% ${Fmt.size(it.rss)}" })

@@ -1,0 +1,1 @@
+Shizuku mode (all processes without root), history charts for CPU, memory, battery power and each process, battery card with power, current and time estimate.

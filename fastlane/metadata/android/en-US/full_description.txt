@@ -1,0 +1,14 @@
+DroidTop shows what is running on your phone and how much it costs — inspired by the classic <b>htop</b>.
+
+<b>Features</b>
+<ul>
+<li>htop-style meters: load and frequency of every CPU core, memory, swap (zram), tasks, load average, uptime, CPU and battery temperature</li>
+<li>Process list with PID, user, state, CPU %, memory %, resident memory, threads, CPU time; tap a column to sort</li>
+<li>App names instead of package names, search by name, PID or user</li>
+<li>Process details: command line, peak memory, swap usage, oom_score_adj</li>
+<li>Actions: SIGTERM, SIGKILL, SIGSTOP/SIGCONT, force stop an app, open app info</li>
+<li>Floating overlay above other apps: CPU, per-core bars, RAM and top processes; drag it anywhere, optionally let touches pass through</li>
+</ul>
+
+<b>Root mode</b>
+Since Android 7 an app can only see its own processes, and since Android 8 overall CPU load is hidden. Without root DroidTop shows memory, core frequencies and temperatures. With root (KernelSU, Magisk, APatch) you get every process, CPU load and all actions.

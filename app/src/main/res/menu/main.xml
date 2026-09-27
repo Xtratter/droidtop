@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/search" android:title="@string/search"
+        android:icon="@android:drawable/ic_menu_search"
+        android:showAsAction="ifRoom|collapseActionView"
+        android:actionViewClass="android.widget.SearchView" />
+    <item android:id="@+id/pause" android:title="@string/pause"
+        android:icon="@android:drawable/ic_media_pause"
+        android:showAsAction="ifRoom" />
+    <item android:id="@+id/overlay" android:title="@string/overlay"
+        android:checkable="true" android:showAsAction="never" />
+    <item android:id="@+id/root" android:title="@string/root_mode"
+        android:checkable="true" android:showAsAction="never" />
+    <item android:id="@+id/settings" android:title="@string/settings"
+        android:showAsAction="never" />
+    <item android:id="@+id/about" android:title="@string/about"
+        android:showAsAction="never" />
+</menu>

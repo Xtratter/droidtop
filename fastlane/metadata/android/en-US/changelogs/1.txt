@@ -1,0 +1,1 @@
+First release: htop-style process list, CPU/memory meters, root mode, floating overlay.

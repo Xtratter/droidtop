@@ -1,0 +1,80 @@
+<resources>
+    <string name="search">Поиск</string>
+    <string name="search_hint">Имя, PID или пользователь</string>
+    <string name="pause">Пауза</string>
+    <string name="resume">Продолжить</string>
+    <string name="overlay">Плавающий оверлей</string>
+    <string name="root_mode">Режим root</string>
+    <string name="settings">Настройки</string>
+    <string name="about">О программе</string>
+    <string name="close">Закрыть</string>
+    <string name="grant">Разрешить</string>
+    <string name="do_it">Выполнить</string>
+    <string name="col_command">Команда</string>
+
+    <string name="mode_root">root</string>
+    <string name="mode_user">без root</string>
+    <string name="hint_no_root">Без root Android показывает приложению только его собственные процессы, а загрузка CPU скрыта. Нажмите сюда или ⋮ → «Режим root», чтобы видеть всё.</string>
+    <string name="hint_root_denied">Доступ root не выдан. Разрешите DroidTop в KernelSU / Magisk / APatch и нажмите сюда, чтобы попробовать снова.</string>
+    <string name="root_asking">Запрашиваю доступ root…</string>
+    <string name="root_failed">Root недоступен — работаю без него</string>
+
+    <string name="m_tasks">Задачи:</string>
+    <string name="m_threads">потоков:</string>
+    <string name="m_running">активных:</string>
+    <string name="m_load">Нагрузка:</string>
+    <string name="m_uptime">Работает:</string>
+    <string name="m_days">%1$dд</string>
+    <string name="m_cpu">CPU:</string>
+    <string name="m_battery">Батарея:</string>
+
+    <string name="overlay_on">Оверлей включён</string>
+    <string name="overlay_hint">Перетаскивайте, чтобы сдвинуть · нажмите, чтобы открыть DroidTop</string>
+    <string name="overlay_permission">Чтобы показывать оверлей поверх других приложений, на следующем экране разрешите DroidTop «Показ поверх других приложений».</string>
+
+    <string name="act_term">Завершить (SIGTERM)</string>
+    <string name="act_kill">Убить (SIGKILL)</string>
+    <string name="act_stop">Приостановить (SIGSTOP)</string>
+    <string name="act_cont">Продолжить (SIGCONT)</string>
+    <string name="act_force_stop">Остановить приложение</string>
+    <string name="act_app_info">О приложении</string>
+    <string name="done_signal">%1$s отправлен процессу %2$d</string>
+    <string name="done_force_stop">%1$s остановлено</string>
+    <string name="failed">Не удалось: %1$s</string>
+    <string name="no_access">нет доступа (нужен root?)</string>
+    <string name="warn_system">Это системный процесс. Его остановка может подвесить или перезагрузить телефон. Продолжить?</string>
+
+    <string name="d_ids">PID %1$d · PPID %2$d · %3$s</string>
+    <string name="d_state">Состояние: %1$s (%2$s)</string>
+    <string name="d_threads">Потоков: %1$d · Nice: %2$d · Приоритет: %3$d</string>
+    <string name="d_cpu">CPU: %1$s%% · Время CPU: %2$s</string>
+    <string name="d_mem">Память: %1$s (%2$s%%) · Вирт.: %3$s</string>
+    <string name="d_started">Запущен %1$s назад</string>
+    <string name="d_kernel">Поток ядра</string>
+    <string name="d_cmdline">Командная строка: %1$s</string>
+    <string name="d_peak">Пик памяти: %1$s</string>
+    <string name="d_swap">В подкачке: %1$s</string>
+    <string name="st_running">выполняется</string>
+    <string name="st_sleeping">спит</string>
+    <string name="st_disk">ждёт ввода-вывода</string>
+    <string name="st_zombie">зомби</string>
+    <string name="st_stopped">остановлен</string>
+    <string name="st_idle">простаивает</string>
+    <string name="st_other">другое</string>
+    <string name="dur_s">%1$d с</string>
+    <string name="dur_m">%1$d мин</string>
+    <string name="dur_hm">%1$d ч %2$d мин</string>
+    <string name="dur_dh">%1$d д %2$d ч</string>
+
+    <string name="s_list">Список процессов</string>
+    <string name="s_interval">Интервал обновления</string>
+    <string name="seconds">%1$d с</string>
+    <string name="s_font">Размер шрифта</string>
+    <string name="s_kernel">Показывать потоки ядра</string>
+    <string name="s_labels">Названия приложений вместо пакетов</string>
+    <string name="s_overlay_top">Топ процессов</string>
+    <string name="s_overlay_alpha">Непрозрачность фона</string>
+    <string name="s_overlay_through">Пропускать касания (тогда его нельзя двигать)</string>
+
+    <string name="about_text"><![CDATA[Версия %1$s<br><br>Монитор процессов и ресурсов для Android по мотивам htop.<br><br>Свободная программа, GPL-3.0-or-later.<br><a href="https://github.com/Xtratter/droidtop">github.com/Xtratter/droidtop</a>]]></string>
+</resources>

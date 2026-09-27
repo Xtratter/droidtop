@@ -1,0 +1,81 @@
+<resources>
+    <string name="app_name" translatable="false">DroidTop</string>
+    <string name="search">Search</string>
+    <string name="search_hint">Name, PID or user</string>
+    <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
+    <string name="overlay">Floating overlay</string>
+    <string name="root_mode">Root mode</string>
+    <string name="settings">Settings</string>
+    <string name="about">About</string>
+    <string name="close">Close</string>
+    <string name="grant">Allow</string>
+    <string name="do_it">Do it</string>
+    <string name="col_command">Command</string>
+
+    <string name="mode_root">root</string>
+    <string name="mode_user">no root</string>
+    <string name="hint_no_root">Without root Android shows an app only its own processes, and CPU load is hidden. Tap here or use ⋮ → «Root mode» to see everything.</string>
+    <string name="hint_root_denied">Root access was not granted. Allow DroidTop in KernelSU / Magisk / APatch, then tap here to try again.</string>
+    <string name="root_asking">Requesting root access…</string>
+    <string name="root_failed">Root is not available — working without it</string>
+
+    <string name="m_tasks">Tasks:</string>
+    <string name="m_threads">thr:</string>
+    <string name="m_running">running:</string>
+    <string name="m_load">Load:</string>
+    <string name="m_uptime">Up:</string>
+    <string name="m_days">%1$dd</string>
+    <string name="m_cpu">CPU:</string>
+    <string name="m_battery">Battery:</string>
+
+    <string name="overlay_on">Overlay is on</string>
+    <string name="overlay_hint">Drag it to move · tap to open DroidTop</string>
+    <string name="overlay_permission">To show the overlay above other apps, allow DroidTop to «Display over other apps» on the next screen.</string>
+
+    <string name="act_term">Terminate (SIGTERM)</string>
+    <string name="act_kill">Kill (SIGKILL)</string>
+    <string name="act_stop">Pause (SIGSTOP)</string>
+    <string name="act_cont">Continue (SIGCONT)</string>
+    <string name="act_force_stop">Force stop the app</string>
+    <string name="act_app_info">App info</string>
+    <string name="done_signal">%1$s sent to %2$d</string>
+    <string name="done_force_stop">%1$s stopped</string>
+    <string name="failed">Failed: %1$s</string>
+    <string name="no_access">no access (root needed?)</string>
+    <string name="warn_system">This is a system process. Stopping it may freeze or restart the phone. Continue?</string>
+
+    <string name="d_ids">PID %1$d · PPID %2$d · %3$s</string>
+    <string name="d_state">State: %1$s (%2$s)</string>
+    <string name="d_threads">Threads: %1$d · Nice: %2$d · Prio: %3$d</string>
+    <string name="d_cpu">CPU: %1$s%% · CPU time: %2$s</string>
+    <string name="d_mem">Memory: %1$s (%2$s%%) · Virt: %3$s</string>
+    <string name="d_started">Started %1$s ago</string>
+    <string name="d_kernel">Kernel thread</string>
+    <string name="d_cmdline">Command line: %1$s</string>
+    <string name="d_peak">Peak memory: %1$s</string>
+    <string name="d_swap">In swap: %1$s</string>
+    <string name="st_running">running</string>
+    <string name="st_sleeping">sleeping</string>
+    <string name="st_disk">waiting for I/O</string>
+    <string name="st_zombie">zombie</string>
+    <string name="st_stopped">stopped</string>
+    <string name="st_idle">idle</string>
+    <string name="st_other">other</string>
+    <string name="dur_s">%1$d s</string>
+    <string name="dur_m">%1$d min</string>
+    <string name="dur_hm">%1$d h %2$d min</string>
+    <string name="dur_dh">%1$d d %2$d h</string>
+
+    <string name="s_list">Process list</string>
+    <string name="s_interval">Refresh interval</string>
+    <string name="seconds">%1$d s</string>
+    <string name="s_font">Font size</string>
+    <string name="s_kernel">Show kernel threads</string>
+    <string name="s_labels">App names instead of package names</string>
+    <string name="s_overlay_top">Top processes</string>
+    <string name="s_overlay_alpha">Background opacity</string>
+    <string name="s_overlay_through">Let touches pass through (can\'t be moved then)</string>
+
+    <string name="about_text"><![CDATA[Version %1$s<br><br>Process and resource monitor for Android, inspired by htop.<br><br>Free software, GPL-3.0-or-later.<br><a href="https://github.com/Xtratter/droidtop">github.com/Xtratter/droidtop</a>]]></string>
+</resources>

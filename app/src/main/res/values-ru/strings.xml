@@ -107,4 +107,11 @@
     <string name="procs_title">Процессы</string>
     <string name="view_table">Классическая таблица htop</string>
     <string name="overlay_started">Оверлей включён — выключить можно из уведомления</string>
+
+    <string name="tree">Дерево</string>
+    <string name="d_parent">Родитель</string>
+    <string name="d_children">Дочерние процессы · %1$d</string>
+    <string name="d_more">…и ещё %1$d</string>
+    <string name="act_collapse">Свернуть ветку</string>
+    <string name="act_expand">Развернуть ветку</string>
 </resources>

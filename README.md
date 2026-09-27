@@ -6,6 +6,14 @@
 
 *An htop-like process & resource monitor for Android with root mode and a floating overlay.*
 
+## Как это выглядит
+
+| Главный экран | Список процессов | Процесс |
+|:---:|:---:|:---:|
+| <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.jpg" width="240"> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpg" width="240"> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpg" width="240"> |
+| **Таблица htop и оверлей** | **Без root** | |
+| <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpg" width="240"> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5.jpg" width="240"> | |
+
 ## Скачать
 
 Готовые APK — в разделе [Releases](https://github.com/Xtratter/droidtop/releases). Нужен Android 8.0 или новее.
@@ -19,6 +27,8 @@
   средняя нагрузка, время работы, температура CPU и батареи
 - **Список процессов** — PID, USER, S, CPU%, MEM%, RES, THR, TIME+; нажатие на заголовок колонки сортирует
   (повторное — меняет направление). На узком экране лишние колонки прячутся, в альбомной ориентации появляются
+- **Дерево процессов** (чип «Дерево», как F5 в htop) — кто кого запустил: `init` → `zygote64` → приложения → их
+  дочерние процессы. Нажатие на значок сворачивает ветку, в карточке процесса есть ссылки на родителя и всех потомков
 - **Названия приложений** вместо `com.example.app`, поиск по имени, PID или пользователю
 - **Нажатие на процесс** — подробности (командная строка, пик памяти, подкачка, `oom_score_adj`) и действия:
   SIGTERM, SIGKILL, SIGSTOP/SIGCONT, остановить приложение, открыть «О приложении»
@@ -54,6 +64,7 @@ app/src/main/java/io/github/xtratter/droidtop/
 ├── ProcParser.kt     ← скрипт опроса и разбор /proc
 ├── Sampler.kt        ← фоновый поток опроса, общий для экрана и оверлея
 ├── Model.kt          ← Snapshot, ProcInfo, сортировки
+├── Tree.kt           ← дерево процессов (родители и потомки)
 ├── MainActivity.kt   ← экран, меню, поиск
 ├── Ui.kt             ← цвета Material You, «стекло», фон, анимации
 ├── CpuCard.kt, MemCard.kt, ChipsView.kt     ← карточки процессора, памяти и сводки

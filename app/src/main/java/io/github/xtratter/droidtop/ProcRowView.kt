@@ -6,7 +6,7 @@ import android.view.View
 
 /** Одна строка списка процессов, рисуется вручную — так быстро и компактно. */
 class ProcRowView(ctx: Context, private val table: Table) : View(ctx) {
-    var proc: ProcInfo? = null
+    var row: Row? = null
     var clkTck = 100L
     var ownPid = android.os.Process.myPid()
 
@@ -15,7 +15,8 @@ class ProcRowView(ctx: Context, private val table: Table) : View(ctx) {
     }
 
     override fun onDraw(c: Canvas) {
-        val p = proc ?: return
+        val r = row ?: return
+        val p = r.p
         c.translate(Ui.dp(context, 12f), 0f)   // как у заголовка, который лежит в шапке с отступами
         table.drawRow(c, { col ->
             when (col) {
@@ -28,7 +29,7 @@ class ProcRowView(ctx: Context, private val table: Table) : View(ctx) {
                 Col.RES -> Fmt.size(p.rss)
                 Col.THR -> p.threads.toString()
                 Col.TIME -> Fmt.cpuTime(p.cpuTicks, clkTck)
-                Col.CMD -> p.title
+                Col.CMD -> Tree.prefix(r) + p.title
             }
         }, { col ->
             when (col) {

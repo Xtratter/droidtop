@@ -1,0 +1,1 @@
+Process tree (who started whom) with collapsible branches, parent and children in process details, honest core bars, lower own CPU usage.

@@ -14,6 +14,12 @@
         android:listSelector="@android:color/transparent"
         android:scrollbarStyle="outsideOverlay" />
 
+    <!-- затемнение под строкой состояния и панелью, чтобы прокручиваемое не мешало читать -->
+    <View
+        android:id="@+id/topScrim"
+        android:layout_width="match_parent"
+        android:layout_height="120dp" />
+
     <!-- плавающая стеклянная панель сверху -->
     <LinearLayout
         android:id="@+id/topBar"

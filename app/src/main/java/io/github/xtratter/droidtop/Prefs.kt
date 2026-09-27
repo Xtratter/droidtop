@@ -17,6 +17,7 @@ class Prefs(ctx: Context) {
     var sortAsc by bool("sort_asc", false)
 
     var tableMode by bool("table_mode", false)
+    var treeMode by bool("tree_mode", false)
 
     var overlayTop by int("overlay_top", 3)
     var overlayAlpha by int("overlay_alpha", 85)

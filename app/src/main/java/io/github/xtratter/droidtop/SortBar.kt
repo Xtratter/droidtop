@@ -26,28 +26,34 @@ class SortBar(ctx: Context, attrs: AttributeSet? = null) : View(ctx, attrs) {
     )
     var sort = Sort.CPU
     var asc = false
+    var tree = false
     var onSort: ((Sort) -> Unit)? = null
+    var onTree: (() -> Unit)? = null
+
+    // чип 0 — «Дерево», дальше — сортировки
+    private val count get() = options.size + 1
 
     private fun label(i: Int): String {
-        val (s, res) = options[i]
+        if (i == 0) return (if (tree) "✓ " else "") + context.getString(R.string.tree)
+        val (s, res) = options[i - 1]
         return context.getString(res) + if (s == sort) (if (asc) "  ↑" else "  ↓") else ""
     }
 
     private fun chipW(i: Int) = textP.measureText(label(i)) + dp(32f)
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val w = options.indices.sumOf { chipW(it).toDouble() } + gap * (options.size - 1) + dp(4f)
+        val w = (0 until count).sumOf { chipW(it).toDouble() } + gap * count + dp(8f)
         setMeasuredDimension(w.toInt(), h.toInt())
     }
 
     override fun onDraw(c: Canvas) {
         var x = 0f
-        for (i in options.indices) {
+        for (i in 0 until count) {
             val w = chipW(i)
             r.set(x, 0f, x + w, h)
-            val sel = options[i].first == sort
+            val sel = if (i == 0) tree else options[i - 1].first == sort
             if (sel) {
-                p.color = Ui.primary
+                p.color = if (i == 0) Ui.tertiary else Ui.primary
                 c.drawRoundRect(r, h / 2, h / 2, p)
             } else {
                 p.color = 0x12FFFFFF
@@ -57,7 +63,7 @@ class SortBar(ctx: Context, attrs: AttributeSet? = null) : View(ctx, attrs) {
             }
             textP.color = if (sel) Ui.ON_ACCENT else Ui.TEXT2
             c.drawText(label(i), x + dp(16f), h / 2 - (textP.ascent() + textP.descent()) / 2, textP)
-            x += w + gap
+            x += w + if (i == 0) gap * 2 else gap
         }
     }
 
@@ -67,10 +73,13 @@ class SortBar(ctx: Context, attrs: AttributeSet? = null) : View(ctx, attrs) {
     override fun onTouchEvent(e: MotionEvent): Boolean {
         if (e.action == MotionEvent.ACTION_UP) {
             var x = 0f
-            for (i in options.indices) {
+            for (i in 0 until count) {
                 val w = chipW(i)
-                if (e.x in x..x + w) { onSort?.invoke(options[i].first); break }
-                x += w + gap
+                if (e.x in x..x + w) {
+                    if (i == 0) onTree?.invoke() else onSort?.invoke(options[i - 1].first)
+                    break
+                }
+                x += w + if (i == 0) gap * 2 else gap
             }
         }
         return true

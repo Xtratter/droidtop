@@ -108,4 +108,11 @@
     <string name="procs_title">Processes</string>
     <string name="view_table">Classic htop table</string>
     <string name="overlay_started">Overlay is on — it lives in the notification</string>
+
+    <string name="tree">Tree</string>
+    <string name="d_parent">Parent</string>
+    <string name="d_children">Children · %1$d</string>
+    <string name="d_more">…and %1$d more</string>
+    <string name="act_collapse">Collapse branch</string>
+    <string name="act_expand">Expand branch</string>
 </resources>

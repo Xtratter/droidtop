@@ -164,10 +164,15 @@ class AuroraDrawable : Drawable() {
     private val p = Paint(Paint.ANTI_ALIAS_FLAG)
     private val blobs = ArrayList<Triple<Float, Float, Float>>()
     private val shaders = ArrayList<Shader>()
+    private val bmpPaint = Paint(Paint.FILTER_BITMAP_FLAG)
+    private var bmp: android.graphics.Bitmap? = null
 
     override fun onBoundsChange(b: Rect) {
-        val w = b.width().toFloat()
-        val h = b.height().toFloat()
+        if (b.isEmpty) return
+        // пятна мягкие, поэтому рисуем их один раз в картинку в 1/4 размера и потом только растягиваем:
+        // так фон почти ничего не стоит при каждом кадре
+        val w = b.width() / 4f
+        val h = b.height() / 4f
         blobs.clear(); shaders.clear()
         fun blob(x: Float, y: Float, r: Float, color: Int, a: Float) {
             blobs += Triple(x, y, r)
@@ -177,14 +182,20 @@ class AuroraDrawable : Drawable() {
         blob(w * 1.0f, h * 0.38f, w * 0.85f, Ui.tertiary, 0.30f)
         blob(w * 0.1f, h * 0.78f, w * 0.9f, Ui.secondary, 0.22f)
         blob(w * 0.9f, h * 1.02f, w * 0.7f, Ui.primary, 0.25f)
-    }
-
-    override fun draw(c: Canvas) {
+        val out = android.graphics.Bitmap.createBitmap(w.toInt().coerceAtLeast(1), h.toInt().coerceAtLeast(1),
+            android.graphics.Bitmap.Config.ARGB_8888)
+        val c = Canvas(out)
         c.drawColor(Ui.base)
         for (i in blobs.indices) {
             p.shader = shaders[i]
             c.drawCircle(blobs[i].first, blobs[i].second, blobs[i].third, p)
         }
+        bmp = out
+    }
+
+    override fun draw(c: Canvas) {
+        val b = bmp
+        if (b == null) c.drawColor(Ui.base) else c.drawBitmap(b, null, bounds, bmpPaint)
     }
 
     override fun setAlpha(alpha: Int) {}
@@ -193,13 +204,36 @@ class AuroraDrawable : Drawable() {
     override fun getOpacity() = PixelFormat.OPAQUE
 }
 
+/**
+ * Вертикальный столбик-«пилюля»: дорожка со скруглением и заливка снизу, обрезанная по форме дорожки.
+ * Так даже 3 % выглядят как 3 %, а не как кружок.
+ */
+object PillBar {
+    private val path = android.graphics.Path()
+    private val rect = RectF()
+
+    fun draw(c: Canvas, left: Float, top: Float, right: Float, bottom: Float, radius: Float,
+             frac: Float, track: Paint, fill: Paint) {
+        rect.set(left, top, right, bottom)
+        c.drawRoundRect(rect, radius, radius, track)
+        val f = frac.coerceIn(0f, 1f)
+        if (f <= 0.004f) return
+        path.reset()
+        path.addRoundRect(rect, radius, radius, android.graphics.Path.Direction.CW)
+        c.save()
+        c.clipPath(path)
+        c.drawRect(left, bottom - (bottom - top) * f, right, bottom, fill)
+        c.restore()
+    }
+}
+
 /** Плавный «пружинистый» переход между значениями (для полосок и больших чисел). */
 class Smooth(private val view: View) {
     var cur = FloatArray(0); private set
     private var from = FloatArray(0)
     private var to = FloatArray(0)
     private val anim = ValueAnimator.ofFloat(0f, 1f).apply {
-        duration = 550
+        duration = 380
         interpolator = OvershootInterpolator(0.7f)
         addUpdateListener { a ->
             val t = a.animatedValue as Float

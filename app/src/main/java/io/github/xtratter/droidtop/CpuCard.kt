@@ -21,6 +21,7 @@ class CpuCard(ctx: Context, attrs: AttributeSet? = null) : View(ctx, attrs) {
     private val freqP = Ui.textPaint(ctx, 10.5f, Ui.medium, Ui.TEXT3).apply { textAlign = Paint.Align.CENTER }
     private val chipP = Ui.textPaint(ctx, 13f, Ui.medium)
     private val fillP = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val trackP = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Ui.TRACK }
     private val r = RectF()
     private val barsH = dp(70f)
     private val smooth = Smooth(this)
@@ -53,7 +54,7 @@ class CpuCard(ctx: Context, attrs: AttributeSet? = null) : View(ctx, attrs) {
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         val top = h - pad - dp(22f) - barsH
-        barShader = LinearGradient(0f, top + barsH, 0f, top, Ui.primary, Ui.tertiary, Shader.TileMode.CLAMP)
+        barShader = LinearGradient(0f, top + barsH, 0f, top, Ui.primary, Ui.mix(Ui.primary, 0xFFFFFFFF.toInt(), 0.45f), Shader.TileMode.CLAMP)
     }
 
     override fun onDraw(c: Canvas) {
@@ -102,20 +103,14 @@ class CpuCard(ctx: Context, attrs: AttributeSet? = null) : View(ctx, attrs) {
         val rad = minOf(bw / 2, dp(12f))
         for (i in 0 until n) {
             val left = pad + i * (bw + gap)
-            r.set(left, top, left + bw, top + barsH)
+            val core = snap.cores[i]
             fillP.shader = null
-            fillP.color = Ui.TRACK
-            c.drawRoundRect(r, rad, rad, fillP)
-            val f = v.getOrElse(i + 1) { 0f }.coerceIn(0f, 1f)
-            if (f > 0.005f) {
-                r.top = top + barsH * (1 - f)
-                if (r.height() < bw) r.top = (top + barsH - bw).coerceAtLeast(top)
-                val core = snap.cores[i]
-                if (!core.usage.isNaN() && core.usage >= 85f) { fillP.color = Ui.HOT }
-                else if (core.usage.isNaN()) { fillP.color = Ui.withAlpha(Ui.primary, 0.7f) }
-                else fillP.shader = barShader
-                c.drawRoundRect(r, rad, rad, fillP)
+            when {
+                !core.usage.isNaN() && core.usage >= 85f -> fillP.color = Ui.HOT
+                core.usage.isNaN() -> fillP.color = Ui.withAlpha(Ui.primary, 0.75f)
+                else -> fillP.shader = barShader
             }
+            PillBar.draw(c, left, top, left + bw, top + barsH, rad, v.getOrElse(i + 1) { 0f }, trackP, fillP)
             val fr = snap.cores[i].freqKHz
             c.drawText(if (fr > 0) String.format(Locale.getDefault(), "%.1f", fr / 1e6) else "—",
                 left + bw / 2, top + barsH + dp(16f), freqP)

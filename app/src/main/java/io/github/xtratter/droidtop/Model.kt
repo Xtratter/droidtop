@@ -45,9 +45,11 @@ class Snapshot(
     val cpuTemp: Float,
     val batteryTemp: Float,
     val clkTck: Long,
+    /** Сколько задач сейчас в очереди на CPU (из /proc/loadavg), -1 — неизвестно. */
+    runningTasks: Int = -1,
 ) {
     val threads = procs.sumOf { it.threads }
-    val running = procs.count { it.state == 'R' }
+    val running = if (runningTasks >= 0) runningTasks else procs.count { it.state == 'R' }
 }
 
 enum class Sort(val cmp: Comparator<ProcInfo>, val ascByDefault: Boolean = false) {

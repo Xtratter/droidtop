@@ -20,11 +20,12 @@ class OverlayView(ctx: Context) : View(ctx) {
     private val rightP = Ui.textPaint(ctx, 12f, Ui.medium).apply { textAlign = Paint.Align.RIGHT }
     private val nameP = Ui.textPaint(ctx, 12f, Ui.regular, Ui.TEXT)
     private val p = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val trackP = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Ui.TRACK }
     private val r = RectF()
     private val smooth = Smooth(this)
     private var glass: GlassDrawable? = null
     private var barShader: Shader? = null
-    private val coresH = dp(26f)
+    private val coresH = dp(30f)
 
     var snapshot: Snapshot? = null
         set(v) {
@@ -98,22 +99,16 @@ class OverlayView(ctx: Context) : View(ctx) {
 
         // столбики ядер
         val top = y + dp(8f)
-        if (barShader == null) barShader = LinearGradient(0f, top + coresH, 0f, top, Ui.primary, Ui.tertiary, Shader.TileMode.CLAMP)
+        if (barShader == null) barShader = LinearGradient(0f, top + coresH, 0f, top, Ui.primary, Ui.mix(Ui.primary, 0xFFFFFFFF.toInt(), 0.45f), Shader.TileMode.CLAMP)
         val n = s.cores.size.coerceAtLeast(1)
         val gap = dp(4f)
         val bw = (width - 2 * pad - gap * (n - 1)) / n
         for (i in 0 until s.cores.size) {
             val left = pad + i * (bw + gap)
-            r.set(left, top, left + bw, top + coresH)
-            p.shader = null; p.color = Ui.TRACK
-            c.drawRoundRect(r, bw / 2, bw / 2, p)
-            val f = v.getOrElse(i + 2) { 0f }.coerceIn(0f, 1f)
-            if (f > 0.01f) {
-                r.top = (top + coresH * (1 - f)).coerceAtMost(top + coresH - bw)
-                val u = s.cores[i].usage
-                if (!u.isNaN() && u >= 85f) p.color = Ui.HOT else p.shader = barShader
-                c.drawRoundRect(r, bw / 2, bw / 2, p)
-            }
+            val u = s.cores[i].usage
+            p.shader = null
+            if (!u.isNaN() && u >= 85f) p.color = Ui.HOT else p.shader = barShader
+            PillBar.draw(c, left, top, left + bw, top + coresH, minOf(bw / 2, dp(5f)), v.getOrElse(i + 2) { 0f }, trackP, p)
         }
         p.shader = null
 

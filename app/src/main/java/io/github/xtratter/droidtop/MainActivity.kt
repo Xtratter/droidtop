@@ -37,6 +37,12 @@ class MainActivity : Activity(), Sampler.Listener {
     private lateinit var btnOverlay: ImageButton
     private lateinit var searchBox: View
     private lateinit var searchField: EditText
+    private lateinit var topScrim: View
+    private var shownRoot: Boolean? = null
+    private var shownHint = -1
+    /** Свёрнутые ветки дерева (PID). */
+    private val collapsed = HashSet<Int>()
+    private var rows: Map<Int, Row> = emptyMap()
 
     // шапка списка
     private lateinit var hint: TextView
@@ -75,17 +81,27 @@ class MainActivity : Activity(), Sampler.Listener {
         btnOverlay = findViewById(R.id.btnOverlay)
         searchBox = findViewById(R.id.searchBox)
         searchField = findViewById(R.id.searchField)
-        findViewById<View>(R.id.bar).background = GlassDrawable(this, 32f, 0xB31A1C22.toInt())
-        searchBox.background = GlassDrawable(this, 26f, 0xB31A1C22.toInt())
+        val barFill = Ui.withAlpha(Ui.mix(Ui.base, 0xFF23262E.toInt(), 0.6f), 0.9f)
+        findViewById<View>(R.id.bar).background = GlassDrawable(this, 32f, barFill)
+        searchBox.background = GlassDrawable(this, 26f, barFill)
+        topScrim = findViewById(R.id.topScrim)
+        topScrim.background = android.graphics.drawable.GradientDrawable(
+            android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
+            intArrayOf(Ui.withAlpha(Ui.base, 0.94f), Ui.withAlpha(Ui.base, 0.7f), Ui.withAlpha(Ui.base, 0f)))
 
         setupTopBar()
         buildHeader()
         setupInsets()
 
         list.adapter = adapter
-        list.setOnItemClickListener { parent, _, pos, _ ->
-            val p = parent.getItemAtPosition(pos) as? ProcInfo ?: return@setOnItemClickListener
-            snapshot?.let { ProcessDialog.show(this, p, it) }
+        list.setOnItemClickListener { parent, view, pos, _ ->
+            val r = parent.getItemAtPosition(pos) as? Row ?: return@setOnItemClickListener
+            // в дереве нажатие по значку сворачивает / раскрывает ветку
+            if (r.cont != null && r.kids > 0 && view is ProcItemView && view.lastDownX < view.iconRight) {
+                toggleBranch(r.p.pid)
+                return@setOnItemClickListener
+            }
+            openProcess(r.p)
         }
         list.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
             if (table.layout(v.width - dp(24f))) { header.invalidate(); list.invalidateViews() }
@@ -126,6 +142,10 @@ class MainActivity : Activity(), Sampler.Listener {
     }
 
     private fun updateListPadding() {
+        val scrimH = topBar.height + dp(28f)
+        if (topScrim.layoutParams.height != scrimH) topScrim.post {
+            topScrim.layoutParams = topScrim.layoutParams.apply { height = scrimH }
+        }
         val top = topBar.height + dp(10f)
         val bottom = insetBottom + dp(16f)
         if (list.paddingTop != top || list.paddingBottom != bottom)
@@ -197,12 +217,18 @@ class MainActivity : Activity(), Sampler.Listener {
             typeface = Ui.medium
             setPadding(dp(8f), 0, 0, 0)
         }, 10f)
-        sortBar = SortBar(this).apply { onSort = { changeSort(it) } }
+        sortBar = SortBar(this).apply {
+            onSort = { changeSort(it) }
+            onTree = { prefs.treeMode = !prefs.treeMode; syncSort(); render() }
+        }
         sortScroll = add(HorizontalScrollView(this).apply {
             isHorizontalScrollBarEnabled = false
             clipToPadding = false
+            setPadding(dp(12f), 0, dp(12f), 0)
             addView(sortBar)
         }, 8f)
+        // чипы прокручиваются до самого края экрана, а не до отступа карточек
+        (sortScroll.layoutParams as LinearLayout.LayoutParams).apply { leftMargin = -dp(12f); rightMargin = -dp(12f) }
         header = HeaderView(this, null).apply {
             table = this@MainActivity.table
             onSort = { col -> changeSort(col.sort) }
@@ -231,7 +257,7 @@ class MainActivity : Activity(), Sampler.Listener {
 
     private fun syncSort() {
         header.sort = prefs.sortKey(); header.asc = prefs.sortAsc; header.invalidate()
-        sortBar.sort = prefs.sortKey(); sortBar.asc = prefs.sortAsc; sortBar.refresh()
+        sortBar.sort = prefs.sortKey(); sortBar.asc = prefs.sortAsc; sortBar.tree = prefs.treeMode; sortBar.refresh()
     }
 
     override fun onStart() {
@@ -260,12 +286,17 @@ class MainActivity : Activity(), Sampler.Listener {
 
     private fun render() {
         val s = snapshot ?: return
-        modeChip.setText(if (s.root) R.string.mode_root else R.string.mode_user)
-        val chipColor = if (s.root) Ui.OK else Ui.WARN
-        modeChip.setTextColor(chipColor)
-        modeChip.background = Ui.pill(this, Ui.withAlpha(chipColor, 0.16f), Ui.withAlpha(chipColor, 0.35f))
-        hint.visibility = if (s.root) View.GONE else View.VISIBLE
-        hint.setText(if (prefs.root) R.string.hint_root_denied else R.string.hint_no_root)
+        // текст и фон меняем только при изменении: любой setText в шапке списка перераскладывает весь список
+        if (shownRoot != s.root) {
+            shownRoot = s.root
+            modeChip.setText(if (s.root) R.string.mode_root else R.string.mode_user)
+            val chipColor = if (s.root) Ui.OK else Ui.WARN
+            modeChip.setTextColor(chipColor)
+            modeChip.background = Ui.pill(this, Ui.withAlpha(chipColor, 0.16f), Ui.withAlpha(chipColor, 0.35f))
+            hint.visibility = if (s.root) View.GONE else View.VISIBLE
+        }
+        val hintRes = if (prefs.root) R.string.hint_root_denied else R.string.hint_no_root
+        if (shownHint != hintRes) { shownHint = hintRes; hint.setText(hintRes) }
 
         if (prefs.tableMode) meters.snapshot = s
         else { cpuCard.update(s); memCard.update(s); chips.update(s) }
@@ -275,9 +306,27 @@ class MainActivity : Activity(), Sampler.Listener {
         val items = s.procs.filter { p ->
             (showKernel || !p.kernel) && (q.isEmpty() ||
                 q in p.title.lowercase() || q in p.name.lowercase() || q in p.user.lowercase() || p.pid.toString() == q)
-        }.sortedWith(prefs.sortKey().comparator(prefs.sortAsc))
-        procsTitle.text = getString(R.string.procs_title) + "  ·  " + items.size
-        adapter.update(items, s.clkTck)
+        }
+        val cmp = prefs.sortKey().comparator(prefs.sortAsc)
+        // дерево — только без поиска: при поиске показываем найденное списком
+        val shown = if (prefs.treeMode && q.isEmpty()) Tree.build(items, cmp, collapsed)
+        else items.sortedWith(cmp).map { Row(it) }
+        rows = shown.associateBy { it.p.pid }
+        val title = getString(R.string.procs_title) + "  ·  " + items.size
+        if (procsTitle.text.toString() != title) procsTitle.text = title
+        adapter.update(shown, s.clkTck)
+    }
+
+    /** Сведения о ветке для диалога: null — не режим дерева или нет потомков. */
+    fun branch(pid: Int): Row? = rows[pid]?.takeIf { it.cont != null && it.kids > 0 }
+
+    fun toggleBranch(pid: Int) {
+        if (!collapsed.remove(pid)) collapsed += pid
+        render()
+    }
+
+    fun openProcess(p: ProcInfo) {
+        snapshot?.let { ProcessDialog.show(this, p, it) }
     }
 
     private fun changeSort(sort: Sort) {
@@ -362,17 +411,17 @@ class MainActivity : Activity(), Sampler.Listener {
     // ---------- список ----------
 
     private inner class ProcAdapter : BaseAdapter() {
-        private var items: List<ProcInfo> = emptyList()
+        private var items: List<Row> = emptyList()
         private var clkTck = 100L
         private var metric = Metric.CPU
         private var maxValue = 1f
 
-        fun update(newItems: List<ProcInfo>, clk: Long) {
+        fun update(newItems: List<Row>, clk: Long) {
             items = newItems; clkTck = clk
             metric = when (prefs.sortKey()) { Sort.MEM -> Metric.MEM; Sort.TIME -> Metric.TIME; else -> Metric.CPU }
             maxValue = when (metric) {
-                Metric.MEM -> (items.maxOfOrNull { it.rss } ?: 1L).toFloat()
-                Metric.TIME -> (items.maxOfOrNull { it.cpuTicks } ?: 1L).toFloat()
+                Metric.MEM -> (items.maxOfOrNull { it.p.rss } ?: 1L).toFloat()
+                Metric.TIME -> (items.maxOfOrNull { it.p.cpuTicks } ?: 1L).toFloat()
                 Metric.CPU -> 100f
             }.coerceAtLeast(1f)
             notifyDataSetChanged()
@@ -380,7 +429,7 @@ class MainActivity : Activity(), Sampler.Listener {
 
         override fun getCount() = items.size
         override fun getItem(position: Int) = items[position]
-        override fun getItemId(position: Int) = items[position].pid.toLong()
+        override fun getItemId(position: Int) = items[position].p.pid.toLong()
         override fun hasStableIds() = true
         override fun getViewTypeCount() = 2
         override fun getItemViewType(position: Int) = if (prefs.tableMode) 1 else 0
@@ -388,14 +437,14 @@ class MainActivity : Activity(), Sampler.Listener {
         override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
             if (prefs.tableMode) {
                 val v = convertView as? ProcRowView ?: ProcRowView(this@MainActivity, table)
-                v.proc = items[position]
+                v.row = items[position]
                 v.clkTck = clkTck
                 if (v.measuredHeight != table.rowH) v.requestLayout()
                 v.invalidate()
                 return v
             }
             val v = convertView as? ProcItemView ?: ProcItemView(this@MainActivity)
-            v.proc = items[position]
+            v.row = items[position]
             v.metric = metric
             v.maxValue = maxValue
             v.clkTck = clkTck

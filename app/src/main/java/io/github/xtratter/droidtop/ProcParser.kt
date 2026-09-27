@@ -84,7 +84,11 @@ class ProcParser(private val pageSize: Long, private val clkTck: Long) {
         val memAvail = mi["MemAvailable"] ?: memFallback[1]
         val memFree = mi["MemFree"] ?: memAvail
 
-        val load = sec['L']?.firstOrNull()?.split(' ')?.take(3)?.mapNotNull { it.toFloatOrNull() }
+        val loadLine = sec['L']?.firstOrNull()
+        // 4-е поле loadavg — «выполняются/всего»; вычитаем 1 — это наш собственный cat
+        val runningTasks = loadLine?.split(' ')?.getOrNull(3)?.substringBefore('/')?.toIntOrNull()
+            ?.let { (it - 1).coerceAtLeast(0) } ?: -1
+        val load = loadLine?.split(' ')?.take(3)?.mapNotNull { it.toFloatOrNull() }
             ?.takeIf { it.size == 3 }?.toFloatArray()
 
         // Температура
@@ -116,7 +120,7 @@ class ProcParser(private val pageSize: Long, private val clkTck: Long) {
             memTotal = memTotal, memAvail = memAvail, memFree = memFree,
             swapTotal = mi["SwapTotal"] ?: 0L, swapFree = mi["SwapFree"] ?: 0L,
             load = load, uptime = uptime, procs = procs,
-            cpuTemp = cpuTemp, batteryTemp = batteryTemp, clkTck = clkTck,
+            cpuTemp = cpuTemp, batteryTemp = batteryTemp, clkTck = clkTck, runningTasks = runningTasks,
         )
     }
 

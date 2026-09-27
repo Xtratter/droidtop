@@ -1,7 +1,6 @@
 package io.github.xtratter.droidtop
 
 import android.app.AlertDialog
-import android.graphics.Color
 import android.view.Gravity
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -25,7 +24,7 @@ object SettingsDialog {
 
         fun section(title: Int) = box.addView(TextView(a).apply {
             setText(title)
-            setTextColor(Palette.GREEN)
+            setTextColor(Ui.primary)
             textSize = 14f
             setPadding(0, (16 * dp).toInt(), 0, (4 * dp).toInt())
         })
@@ -33,6 +32,7 @@ object SettingsDialog {
         fun switch(title: Int, get: () -> Boolean, set: (Boolean) -> Unit) = box.addView(Switch(a).apply {
             setText(title)
             textSize = 16f
+            setTextColor(Ui.TEXT)
             minHeight = (48 * dp).toInt()
             isChecked = get()
             setOnCheckedChangeListener { _, v -> set(v); changed() }
@@ -43,7 +43,7 @@ object SettingsDialog {
                 textSize = 16f
                 minHeight = (48 * dp).toInt()
                 gravity = Gravity.CENTER_VERTICAL
-                setTextColor(Color.WHITE)
+                setTextColor(Ui.TEXT)
             }
             fun refresh() { tv.text = a.getString(title) + ": " + label(get()) }
             refresh()
@@ -53,7 +53,7 @@ object SettingsDialog {
                     .setSingleChoiceItems(values.map(label).toTypedArray(), values.indexOf(get())) { d, i ->
                         set(values[i]); refresh(); changed(); d.dismiss()
                     }
-                    .show()
+                    .show().also { Ui.glassDialog(it) }
             }
             box.addView(tv)
         }
@@ -63,6 +63,7 @@ object SettingsDialog {
             { a.getString(R.string.seconds, it / 1000) }, { prefs.intervalMs }, { prefs.intervalMs = it })
         choice(R.string.s_font, listOf(10, 11, 12, 13, 14, 16),
             { "$it sp" }, { prefs.fontSp }, { prefs.fontSp = it })
+        switch(R.string.view_table, { prefs.tableMode }, { prefs.tableMode = it })
         switch(R.string.s_kernel, { prefs.kernelThreads }, { prefs.kernelThreads = it })
         switch(R.string.s_labels, { prefs.appLabels }, { prefs.appLabels = it })
 
@@ -77,6 +78,6 @@ object SettingsDialog {
             .setTitle(R.string.settings)
             .setView(ScrollView(a).apply { addView(box) })
             .setPositiveButton(android.R.string.ok, null)
-            .show()
+            .show().also { Ui.glassDialog(it) }
     }
 }

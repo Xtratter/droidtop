@@ -90,9 +90,14 @@ object Sampler {
             if (listeners.isEmpty()) { ticking = false; return }
             val primed = parser.primed
             val s = sample()
-            if (s != null) main.post {
-                last = s
-                listeners.forEach { it.onSnapshot(s) }
+            if (s != null) {
+                main.post {
+                    last = s
+                    listeners.forEach { it.onSnapshot(s) }
+                }
+                // значки приложений грузим после показа, чтобы не задерживать первый кадр
+                val pkgs = s.procs.mapNotNullTo(HashSet()) { it.pkg }
+                if (AppIcons.load(app, pkgs)) main.post { listeners.forEach { it.onSnapshot(s) } }
             }
             // первый замер не даёт загрузку CPU — второй делаем быстро
             val delay = if (primed) prefs.intervalMs.toLong() else 600L

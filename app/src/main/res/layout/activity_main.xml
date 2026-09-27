@@ -1,39 +1,107 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
-
-    <io.github.xtratter.droidtop.MetersView
-        android:id="@+id/meters"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingLeft="6dp"
-        android:paddingTop="4dp"
-        android:paddingRight="6dp"
-        android:paddingBottom="4dp" />
-
-    <TextView
-        android:id="@+id/hint"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#FF3E2723"
-        android:padding="8dp"
-        android:textColor="#FFFFE0B2"
-        android:textSize="13sp"
-        android:visibility="gone" />
-
-    <io.github.xtratter.droidtop.HeaderView
-        android:id="@+id/header"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+    android:layout_height="match_parent">
 
     <ListView
         android:id="@+id/list"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
         android:divider="@null"
         android:dividerHeight="0dp"
-        android:fastScrollEnabled="true" />
-</LinearLayout>
+        android:listSelector="@android:color/transparent"
+        android:scrollbarStyle="outsideOverlay" />
+
+    <!-- плавающая стеклянная панель сверху -->
+    <LinearLayout
+        android:id="@+id/topBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp">
+
+        <LinearLayout
+            android:id="@+id/bar"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingLeft="20dp"
+            android:paddingRight="6dp">
+
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:text="@string/app_name"
+                android:textColor="#FFF2F2F6"
+                android:textSize="22sp" />
+
+            <TextView
+                android:id="@+id/modeChip"
+                android:layout_width="wrap_content"
+                android:layout_height="26dp"
+                android:layout_marginLeft="10dp"
+                android:fontFamily="sans-serif-medium"
+                android:gravity="center"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:textSize="12sp" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <ImageButton android:id="@+id/btnSearch" style="@style/BarButton"
+                android:contentDescription="@string/search" android:src="@drawable/ic_search" />
+            <ImageButton android:id="@+id/btnPause" style="@style/BarButton"
+                android:contentDescription="@string/pause" android:src="@drawable/ic_pause" />
+            <ImageButton android:id="@+id/btnOverlay" style="@style/BarButton"
+                android:contentDescription="@string/overlay" android:src="@drawable/ic_overlay" />
+            <ImageButton android:id="@+id/btnMore" style="@style/BarButton"
+                android:contentDescription="@string/settings" android:src="@drawable/ic_more" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/searchBox"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingLeft="18dp"
+            android:paddingRight="6dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:alpha="0.7"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_search" />
+
+            <EditText
+                android:id="@+id/searchField"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginLeft="12dp"
+                android:layout_weight="1"
+                android:background="@null"
+                android:hint="@string/search_hint"
+                android:imeOptions="actionSearch"
+                android:importantForAutofill="no"
+                android:inputType="text"
+                android:textColor="#FFF2F2F6"
+                android:textColorHint="#73F2F2F6"
+                android:textSize="16sp" />
+
+            <ImageButton android:id="@+id/btnSearchClose" style="@style/BarButton"
+                android:contentDescription="@string/close" android:src="@drawable/ic_close" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

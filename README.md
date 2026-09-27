@@ -12,6 +12,9 @@
 
 ## Возможности
 
+- **Дизайн Material 3 с «жидким стеклом»** — полупрозрачные карточки поверх мягкого цветного фона,
+  цвета подстраиваются под обои (Android 12+), плавные анимации. Любителям классики — режим таблицы htop
+
 - **Метры как в htop** — загрузка и частота каждого ядра, память, подкачка (zram), задачи,
   средняя нагрузка, время работы, температура CPU и батареи
 - **Список процессов** — PID, USER, S, CPU%, MEM%, RES, THR, TIME+; нажатие на заголовок колонки сортирует
@@ -52,7 +55,10 @@ app/src/main/java/io/github/xtratter/droidtop/
 ├── Sampler.kt        ← фоновый поток опроса, общий для экрана и оверлея
 ├── Model.kt          ← Snapshot, ProcInfo, сортировки
 ├── MainActivity.kt   ← экран, меню, поиск
-├── MetersView.kt     ← полоски ядер и памяти
+├── Ui.kt             ← цвета Material You, «стекло», фон, анимации
+├── CpuCard.kt, MemCard.kt, ChipsView.kt     ← карточки процессора, памяти и сводки
+├── ProcItemView.kt, SortBar.kt, AppIcons.kt ← список процессов карточками
+├── MetersView.kt     ← полоски ядер и памяти (режим таблицы htop)
 ├── Table.kt, HeaderView.kt, ProcRowView.kt  ← таблица процессов
 ├── ProcessDialog.kt  ← подробности и действия с процессом
 ├── SettingsDialog.kt, Prefs.kt              ← настройки

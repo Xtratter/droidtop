@@ -66,7 +66,7 @@ class Table(private val ctx: Context) {
         for (col in cols) {
             val w = if (col == Col.CMD) cmdChars else col.width
             var t = text(col)
-            if (col == Col.CMD && t.length > w) t = t.take(w - 1) + "…"
+            if (t.length > w && (col == Col.CMD || !col.right)) t = t.take(w - 1) + if (col == Col.CMD) "…" else "+"
             val tx = if (col.right && t.length < w) x + (w - t.length) * charW else x
             paint.color = color(col)
             c.drawText(t, tx, baseline, paint)

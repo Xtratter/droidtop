@@ -1,0 +1,1 @@
+New Material 3 design with liquid glass cards, app icons, animated meters; fixed top of the screen hidden under the toolbar on Android 15.

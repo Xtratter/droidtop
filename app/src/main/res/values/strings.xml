@@ -48,7 +48,6 @@
     <string name="d_ids">PID %1$d · PPID %2$d · %3$s</string>
     <string name="d_state">State: %1$s (%2$s)</string>
     <string name="d_threads">Threads: %1$d · Nice: %2$d · Prio: %3$d</string>
-    <string name="d_cpu">CPU: %1$s%% · CPU time: %2$s</string>
     <string name="d_mem">Memory: %1$s (%2$s%%) · Virt: %3$s</string>
     <string name="d_started">Started %1$s ago</string>
     <string name="d_kernel">Kernel thread</string>
@@ -78,4 +77,35 @@
     <string name="s_overlay_through">Let touches pass through (can\'t be moved then)</string>
 
     <string name="about_text"><![CDATA[Version %1$s<br><br>Process and resource monitor for Android, inspired by htop.<br><br>Free software, GPL-3.0-or-later.<br><a href="https://github.com/Xtratter/droidtop">github.com/Xtratter/droidtop</a>]]></string>
+
+    <string name="u_mb">MB</string>
+    <string name="u_gb">GB</string>
+    <string name="u_ghz">GHz</string>
+    <string name="c_cpu">Processor</string>
+    <plurals name="c_cores"><item quantity="one">%d core</item><item quantity="other">%d cores</item></plurals>
+    <string name="c_up_to">up to %1$s</string>
+    <string name="c_freq_only">Max frequency now · load needs root</string>
+    <string name="c_mem">Memory</string>
+    <string name="c_of">of %1$s</string>
+    <string name="c_used">used</string>
+    <string name="c_cache">cache %1$s</string>
+    <string name="c_free">free %1$s</string>
+    <string name="c_swap">Swap</string>
+    <string name="i_tasks">Tasks</string>
+    <string name="i_threads">Threads</string>
+    <string name="i_running">Running</string>
+    <string name="i_load">Load</string>
+    <string name="i_uptime">Uptime</string>
+    <string name="i_battery">Battery</string>
+    <string name="sort_cpu">CPU</string>
+    <string name="sort_mem">Memory</string>
+    <string name="sort_time">CPU time</string>
+    <string name="sort_name">Name</string>
+    <string name="sort_pid">PID</string>
+    <string name="sort_user">User</string>
+    <string name="sort_thr">Threads</string>
+    <string name="row_sub">PID %1$d · %2$s · %3$s</string>
+    <string name="procs_title">Processes</string>
+    <string name="view_table">Classic htop table</string>
+    <string name="overlay_started">Overlay is on — it lives in the notification</string>
 </resources>

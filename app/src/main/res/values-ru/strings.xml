@@ -47,7 +47,6 @@
     <string name="d_ids">PID %1$d · PPID %2$d · %3$s</string>
     <string name="d_state">Состояние: %1$s (%2$s)</string>
     <string name="d_threads">Потоков: %1$d · Nice: %2$d · Приоритет: %3$d</string>
-    <string name="d_cpu">CPU: %1$s%% · Время CPU: %2$s</string>
     <string name="d_mem">Память: %1$s (%2$s%%) · Вирт.: %3$s</string>
     <string name="d_started">Запущен %1$s назад</string>
     <string name="d_kernel">Поток ядра</string>
@@ -77,4 +76,35 @@
     <string name="s_overlay_through">Пропускать касания (тогда его нельзя двигать)</string>
 
     <string name="about_text"><![CDATA[Версия %1$s<br><br>Монитор процессов и ресурсов для Android по мотивам htop.<br><br>Свободная программа, GPL-3.0-or-later.<br><a href="https://github.com/Xtratter/droidtop">github.com/Xtratter/droidtop</a>]]></string>
+
+    <string name="u_mb">МБ</string>
+    <string name="u_gb">ГБ</string>
+    <string name="u_ghz">ГГц</string>
+    <string name="c_cpu">Процессор</string>
+    <plurals name="c_cores"><item quantity="one">%d ядро</item><item quantity="few">%d ядра</item><item quantity="many">%d ядер</item><item quantity="other">%d ядра</item></plurals>
+    <string name="c_up_to">до %1$s</string>
+    <string name="c_freq_only">Макс. частота сейчас · загрузка — только с root</string>
+    <string name="c_mem">Память</string>
+    <string name="c_of">из %1$s</string>
+    <string name="c_used">занято</string>
+    <string name="c_cache">кэш %1$s</string>
+    <string name="c_free">свободно %1$s</string>
+    <string name="c_swap">Подкачка</string>
+    <string name="i_tasks">Задачи</string>
+    <string name="i_threads">Потоки</string>
+    <string name="i_running">Активны</string>
+    <string name="i_load">Нагрузка</string>
+    <string name="i_uptime">Работает</string>
+    <string name="i_battery">Батарея</string>
+    <string name="sort_cpu">CPU</string>
+    <string name="sort_mem">Память</string>
+    <string name="sort_time">Время CPU</string>
+    <string name="sort_name">Имя</string>
+    <string name="sort_pid">PID</string>
+    <string name="sort_user">Пользователь</string>
+    <string name="sort_thr">Потоки</string>
+    <string name="row_sub">PID %1$d · %2$s · %3$s</string>
+    <string name="procs_title">Процессы</string>
+    <string name="view_table">Классическая таблица htop</string>
+    <string name="overlay_started">Оверлей включён — выключить можно из уведомления</string>
 </resources>

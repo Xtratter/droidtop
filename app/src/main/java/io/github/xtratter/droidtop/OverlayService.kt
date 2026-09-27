@@ -34,6 +34,7 @@ class OverlayService : Service(), Sampler.Listener {
         startInForeground()
         if (!Settings.canDrawOverlays(this)) { stopSelf(); return }
         wm = getSystemService(WindowManager::class.java)
+        Ui.init(this)
         view = OverlayView(this)
         lp = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,

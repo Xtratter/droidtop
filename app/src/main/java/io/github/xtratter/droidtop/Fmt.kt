@@ -38,3 +38,15 @@ object Fmt {
 
     fun load(v: Float): String = f("%.2f", v)
 }
+
+/** Размеры и частоты с единицами на языке интерфейса — для карточек. */
+object Human {
+    fun size(ctx: android.content.Context, bytes: Long): String {
+        val m = bytes / 1048576.0
+        return if (m < 1000) String.format(Locale.getDefault(), "%.0f %s", m, ctx.getString(R.string.u_mb))
+        else String.format(Locale.getDefault(), "%.2f %s", m / 1024, ctx.getString(R.string.u_gb))
+    }
+
+    fun ghz(ctx: android.content.Context, khz: Long) =
+        String.format(Locale.getDefault(), "%.2f %s", khz / 1e6, ctx.getString(R.string.u_ghz))
+}

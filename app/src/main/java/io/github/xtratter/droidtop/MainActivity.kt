@@ -9,66 +9,229 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.text.Editable
+import android.text.TextWatcher
 import android.text.method.LinkMovementMethod
-import android.view.Menu
-import android.view.MenuItem
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowInsets
+import android.view.inputmethod.InputMethodManager
 import android.widget.BaseAdapter
+import android.widget.EditText
+import android.widget.HorizontalScrollView
+import android.widget.ImageButton
+import android.widget.LinearLayout
 import android.widget.ListView
-import android.widget.SearchView
+import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
 
 class MainActivity : Activity(), Sampler.Listener {
     private lateinit var prefs: Prefs
     private lateinit var table: Table
-    private lateinit var meters: MetersView
-    private lateinit var header: HeaderView
-    private lateinit var hint: TextView
     private lateinit var list: ListView
+    private lateinit var topBar: View
+    private lateinit var modeChip: TextView
+    private lateinit var btnPause: ImageButton
+    private lateinit var btnOverlay: ImageButton
+    private lateinit var searchBox: View
+    private lateinit var searchField: EditText
+
+    // шапка списка
+    private lateinit var hint: TextView
+    private lateinit var cpuCard: CpuCard
+    private lateinit var memCard: MemCard
+    private lateinit var chips: ChipsView
+    private lateinit var meters: MetersView
+    private lateinit var procsTitle: TextView
+    private lateinit var sortScroll: View
+    private lateinit var sortBar: SortBar
+    private lateinit var header: HeaderView
+
     private val adapter = ProcAdapter()
     private var snapshot: Snapshot? = null
     private var paused = false
     private var filter = ""
     private var waitingOverlayPermission = false
-    private var menu: Menu? = null
+    private var insetTop = 0
+    private var insetBottom = 0
+
+    private fun dp(v: Float) = Ui.dp(this, v).toInt()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        prefs = Prefs(this)
+        Ui.init(this)
         Sampler.init(this)
+        prefs = Prefs(this)
+        setupWindow()
+        setContentView(R.layout.activity_main)
         table = Table(this).apply { cmdTitle = getString(R.string.col_command) }
-        meters = findViewById(R.id.meters)
-        header = findViewById(R.id.header)
-        hint = findViewById(R.id.hint)
-        list = findViewById(R.id.list)
 
-        header.table = table
-        header.onSort = { col -> changeSort(col.sort) }
+        list = findViewById(R.id.list)
+        topBar = findViewById(R.id.topBar)
+        modeChip = findViewById(R.id.modeChip)
+        btnPause = findViewById(R.id.btnPause)
+        btnOverlay = findViewById(R.id.btnOverlay)
+        searchBox = findViewById(R.id.searchBox)
+        searchField = findViewById(R.id.searchField)
+        findViewById<View>(R.id.bar).background = GlassDrawable(this, 32f, 0xB31A1C22.toInt())
+        searchBox.background = GlassDrawable(this, 26f, 0xB31A1C22.toInt())
+
+        setupTopBar()
+        buildHeader()
+        setupInsets()
+
         list.adapter = adapter
-        list.setOnItemClickListener { _, _, pos, _ ->
-            snapshot?.let { ProcessDialog.show(this, adapter.getItem(pos), it) }
+        list.setOnItemClickListener { parent, _, pos, _ ->
+            val p = parent.getItemAtPosition(pos) as? ProcInfo ?: return@setOnItemClickListener
+            snapshot?.let { ProcessDialog.show(this, p, it) }
         }
         list.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
-            if (table.layout(v.width)) { header.invalidate(); list.invalidateViews() }
+            if (table.layout(v.width - dp(24f))) { header.invalidate(); list.invalidateViews() }
         }
-        hint.setOnClickListener { setRoot(true) }
         applyPrefs()
+    }
+
+    /** Рисуем под системными панелями (edge-to-edge) — на любой версии Android одинаково. */
+    @Suppress("DEPRECATION")
+    private fun setupWindow() {
+        window.setBackgroundDrawable(AuroraDrawable())
+        if (Build.VERSION.SDK_INT >= 30) window.setDecorFitsSystemWindows(false)
+        else window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+        if (Build.VERSION.SDK_INT >= 29) {
+            window.isNavigationBarContrastEnforced = false
+            window.isStatusBarContrastEnforced = false
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun setupInsets() {
+        findViewById<View>(R.id.root).setOnApplyWindowInsetsListener { _, ins ->
+            if (Build.VERSION.SDK_INT >= 30) {
+                val bars = ins.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
+                insetTop = bars.top; insetBottom = bars.bottom
+                topBar.setPadding(dp(12f) + bars.left, bars.top + dp(8f), dp(12f) + bars.right, 0)
+                list.setPadding(bars.left, list.paddingTop, bars.right, list.paddingBottom)
+            } else {
+                insetTop = ins.systemWindowInsetTop; insetBottom = ins.systemWindowInsetBottom
+                topBar.setPadding(dp(12f), insetTop + dp(8f), dp(12f), 0)
+            }
+            updateListPadding()
+            ins
+        }
+        // список начинается под плавающей панелью и прокручивается под неё
+        topBar.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> updateListPadding() }
+    }
+
+    private fun updateListPadding() {
+        val top = topBar.height + dp(10f)
+        val bottom = insetBottom + dp(16f)
+        if (list.paddingTop != top || list.paddingBottom != bottom)
+            list.post { list.setPadding(list.paddingLeft, top, list.paddingRight, bottom) }
+    }
+
+    private fun setupTopBar() {
+        findViewById<View>(R.id.btnSearch).setOnClickListener { showSearch(searchBox.visibility != View.VISIBLE) }
+        findViewById<View>(R.id.btnSearchClose).setOnClickListener { showSearch(false) }
+        btnPause.setOnClickListener {
+            paused = !paused
+            updateButtons()
+            if (!paused) render()
+        }
+        btnOverlay.setOnClickListener {
+            if (OverlayService.running) OverlayService.stop(this) else startOverlay()
+            btnOverlay.postDelayed({ updateButtons() }, 300)
+        }
+        findViewById<View>(R.id.btnMore).setOnClickListener { showMenu(it) }
+        modeChip.setOnClickListener { if (snapshot?.root != true) setRoot(true) }
+        searchField.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+            override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+            override fun afterTextChanged(s: Editable?) { filter = s?.toString().orEmpty(); render() }
+        })
+    }
+
+    private fun showSearch(show: Boolean) {
+        val imm = getSystemService(InputMethodManager::class.java)
+        searchBox.visibility = if (show) View.VISIBLE else View.GONE
+        if (show) {
+            searchField.requestFocus()
+            imm.showSoftInput(searchField, 0)
+        } else {
+            searchField.setText("")
+            imm.hideSoftInputFromWindow(searchField.windowToken, 0)
+        }
+    }
+
+    private fun buildHeader() {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(12f), 0, dp(12f), dp(4f))
+        }
+        fun <T : View> add(v: T, bottom: Float = 10f): T {
+            box.addView(v, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                .apply { bottomMargin = dp(bottom) })
+            return v
+        }
+        hint = add(TextView(this).apply {
+            background = GlassDrawable(this@MainActivity, 24f, 0x33FFC857)
+            setPadding(dp(18f), dp(14f), dp(18f), dp(14f))
+            setTextColor(0xFFFFE6A8.toInt())
+            textSize = 13.5f
+            setLineSpacing(0f, 1.15f)
+            foreground = Ui.ripple(this@MainActivity, 24f)
+            setOnClickListener { setRoot(true) }
+        })
+        cpuCard = add(CpuCard(this))
+        memCard = add(MemCard(this))
+        chips = add(ChipsView(this), 18f)
+        meters = add(MetersView(this, null).apply {
+            background = GlassDrawable(this@MainActivity, 24f)
+            setPadding(dp(12f), dp(12f), dp(12f), dp(12f))
+        })
+        procsTitle = add(TextView(this).apply {
+            setTextColor(Ui.TEXT)
+            textSize = 20f
+            typeface = Ui.medium
+            setPadding(dp(8f), 0, 0, 0)
+        }, 10f)
+        sortBar = SortBar(this).apply { onSort = { changeSort(it) } }
+        sortScroll = add(HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false
+            clipToPadding = false
+            addView(sortBar)
+        }, 8f)
+        header = HeaderView(this, null).apply {
+            table = this@MainActivity.table
+            onSort = { col -> changeSort(col.sort) }
+        }
+        add(header, 0f)
+        list.addHeaderView(box, null, false)
     }
 
     /** Применить настройки после изменения. */
     fun applyPrefs() {
         table.setFont(prefs.fontSp)
         meters.setFont(prefs.fontSp)
-        header.sort = prefs.sortKey()
-        header.asc = prefs.sortAsc
+        val t = prefs.tableMode
+        cpuCard.visibility = if (t) View.GONE else View.VISIBLE
+        memCard.visibility = cpuCard.visibility
+        chips.visibility = cpuCard.visibility
+        sortScroll.visibility = cpuCard.visibility
+        meters.visibility = if (t) View.VISIBLE else View.GONE
+        header.visibility = meters.visibility
+        syncSort()
         header.requestLayout()
-        header.invalidate()
         list.invalidateViews()
         OverlayService.instance?.applyPrefs()
         render()
+    }
+
+    private fun syncSort() {
+        header.sort = prefs.sortKey(); header.asc = prefs.sortAsc; header.invalidate()
+        sortBar.sort = prefs.sortKey(); sortBar.asc = prefs.sortAsc; sortBar.refresh()
     }
 
     override fun onStart() {
@@ -87,21 +250,25 @@ class MainActivity : Activity(), Sampler.Listener {
             waitingOverlayPermission = false
             if (Settings.canDrawOverlays(this)) startOverlay()
         }
-        updateMenu()
+        updateButtons()
     }
 
     override fun onSnapshot(s: Snapshot) {
         snapshot = s
         if (!paused) render()
-        updateMenu()
     }
 
     private fun render() {
         val s = snapshot ?: return
-        meters.snapshot = s
-        actionBar?.subtitle = getString(if (s.root) R.string.mode_root else R.string.mode_user)
+        modeChip.setText(if (s.root) R.string.mode_root else R.string.mode_user)
+        val chipColor = if (s.root) Ui.OK else Ui.WARN
+        modeChip.setTextColor(chipColor)
+        modeChip.background = Ui.pill(this, Ui.withAlpha(chipColor, 0.16f), Ui.withAlpha(chipColor, 0.35f))
         hint.visibility = if (s.root) View.GONE else View.VISIBLE
         hint.setText(if (prefs.root) R.string.hint_root_denied else R.string.hint_no_root)
+
+        if (prefs.tableMode) meters.snapshot = s
+        else { cpuCard.update(s); memCard.update(s); chips.update(s) }
 
         val q = filter.trim().lowercase()
         val showKernel = prefs.kernelThreads
@@ -109,57 +276,43 @@ class MainActivity : Activity(), Sampler.Listener {
             (showKernel || !p.kernel) && (q.isEmpty() ||
                 q in p.title.lowercase() || q in p.name.lowercase() || q in p.user.lowercase() || p.pid.toString() == q)
         }.sortedWith(prefs.sortKey().comparator(prefs.sortAsc))
+        procsTitle.text = getString(R.string.procs_title) + "  ·  " + items.size
         adapter.update(items, s.clkTck)
     }
 
     private fun changeSort(sort: Sort) {
         if (prefs.sortKey() == sort) prefs.sortAsc = !prefs.sortAsc
         else { prefs.sort = sort.name; prefs.sortAsc = sort.ascByDefault }
-        header.sort = sort
-        header.asc = prefs.sortAsc
-        header.invalidate()
+        syncSort()
         render()
-        list.setSelection(0)
     }
 
-    // ---------- меню ----------
+    private fun updateButtons() {
+        btnPause.setImageResource(if (paused) R.drawable.ic_play else R.drawable.ic_pause)
+        btnPause.contentDescription = getString(if (paused) R.string.resume else R.string.pause)
+        val on = OverlayService.running
+        btnOverlay.imageTintList = android.content.res.ColorStateList.valueOf(if (on) Ui.ON_ACCENT else Ui.TEXT)
+        btnOverlay.background = if (on) Ui.pill(this, Ui.primary) else {
+            val a = obtainStyledAttributes(intArrayOf(android.R.attr.selectableItemBackgroundBorderless))
+            a.getDrawable(0).also { a.recycle() }
+        }
+    }
 
-    override fun onCreateOptionsMenu(m: Menu): Boolean {
-        menuInflater.inflate(R.menu.main, m)
-        menu = m
-        val sv = m.findItem(R.id.search).actionView as SearchView
-        sv.queryHint = getString(R.string.search_hint)
-        sv.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(q: String?) = true
-            override fun onQueryTextChange(q: String?): Boolean {
-                filter = q.orEmpty(); render(); return true
+    private fun showMenu(anchor: View) {
+        val pm = PopupMenu(this, anchor, Gravity.END)
+        pm.menuInflater.inflate(R.menu.main, pm.menu)
+        pm.menu.findItem(R.id.root).isChecked = prefs.root
+        pm.menu.findItem(R.id.view_mode).isChecked = prefs.tableMode
+        pm.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.root -> setRoot(!prefs.root)
+                R.id.view_mode -> { prefs.tableMode = !prefs.tableMode; applyPrefs() }
+                R.id.settings -> SettingsDialog.show(this, prefs)
+                R.id.about -> showAbout()
             }
-        })
-        updateMenu()
-        return true
-    }
-
-    private fun updateMenu() {
-        val m = menu ?: return
-        m.findItem(R.id.root).isChecked = prefs.root
-        m.findItem(R.id.overlay).isChecked = OverlayService.running
-        m.findItem(R.id.pause).apply {
-            setIcon(if (paused) android.R.drawable.ic_media_play else android.R.drawable.ic_media_pause)
-            setTitle(if (paused) R.string.resume else R.string.pause)
+            true
         }
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.pause -> { paused = !paused; updateMenu(); if (!paused) render() }
-            R.id.root -> setRoot(!prefs.root)
-            R.id.overlay -> if (OverlayService.running) OverlayService.stop(this) else startOverlay()
-            R.id.settings -> SettingsDialog.show(this, prefs)
-            R.id.about -> showAbout()
-            else -> return super.onOptionsItemSelected(item)
-        }
-        updateMenu()
-        return true
+        pm.show()
     }
 
     private fun setRoot(root: Boolean) {
@@ -167,14 +320,12 @@ class MainActivity : Activity(), Sampler.Listener {
         if (root) Toast.makeText(this, R.string.root_asking, Toast.LENGTH_SHORT).show()
         Sampler.setRoot(root) { ok ->
             if (root && !ok) Toast.makeText(this, R.string.root_failed, Toast.LENGTH_LONG).show()
-            updateMenu()
         }
-        updateMenu()
     }
 
     private fun startOverlay() {
         if (!Settings.canDrawOverlays(this)) {
-            AlertDialog.Builder(this)
+            val d = AlertDialog.Builder(this)
                 .setTitle(R.string.overlay)
                 .setMessage(R.string.overlay_permission)
                 .setPositiveButton(R.string.grant) { _, _ ->
@@ -183,13 +334,14 @@ class MainActivity : Activity(), Sampler.Listener {
                 }
                 .setNegativeButton(android.R.string.cancel, null)
                 .show()
+            Ui.glassDialog(d)
             return
         }
         if (Build.VERSION.SDK_INT >= 33 &&
             checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
         OverlayService.start(this)
-        list.postDelayed({ updateMenu() }, 300)
+        Toast.makeText(this, R.string.overlay_started, Toast.LENGTH_SHORT).show()
     }
 
     private fun showAbout() {
@@ -197,12 +349,14 @@ class MainActivity : Activity(), Sampler.Listener {
         val tv = TextView(this).apply {
             text = android.text.Html.fromHtml(getString(R.string.about_text, version), android.text.Html.FROM_HTML_MODE_LEGACY)
             movementMethod = LinkMovementMethod.getInstance()
-            val p = (20 * resources.displayMetrics.density).toInt()
-            setPadding(p, p, p, 0)
+            setLinkTextColor(Ui.primary)
+            setTextColor(Ui.TEXT2)
+            setPadding(dp(24f), dp(8f), dp(24f), 0)
             textSize = 15f
         }
-        AlertDialog.Builder(this).setTitle(R.string.app_name).setView(tv)
+        val d = AlertDialog.Builder(this).setTitle(R.string.app_name).setView(tv)
             .setPositiveButton(android.R.string.ok, null).show()
+        Ui.glassDialog(d)
     }
 
     // ---------- список ----------
@@ -210,9 +364,17 @@ class MainActivity : Activity(), Sampler.Listener {
     private inner class ProcAdapter : BaseAdapter() {
         private var items: List<ProcInfo> = emptyList()
         private var clkTck = 100L
+        private var metric = Metric.CPU
+        private var maxValue = 1f
 
         fun update(newItems: List<ProcInfo>, clk: Long) {
             items = newItems; clkTck = clk
+            metric = when (prefs.sortKey()) { Sort.MEM -> Metric.MEM; Sort.TIME -> Metric.TIME; else -> Metric.CPU }
+            maxValue = when (metric) {
+                Metric.MEM -> (items.maxOfOrNull { it.rss } ?: 1L).toFloat()
+                Metric.TIME -> (items.maxOfOrNull { it.cpuTicks } ?: 1L).toFloat()
+                Metric.CPU -> 100f
+            }.coerceAtLeast(1f)
             notifyDataSetChanged()
         }
 
@@ -220,12 +382,23 @@ class MainActivity : Activity(), Sampler.Listener {
         override fun getItem(position: Int) = items[position]
         override fun getItemId(position: Int) = items[position].pid.toLong()
         override fun hasStableIds() = true
+        override fun getViewTypeCount() = 2
+        override fun getItemViewType(position: Int) = if (prefs.tableMode) 1 else 0
 
         override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-            val v = convertView as? ProcRowView ?: ProcRowView(this@MainActivity, table)
+            if (prefs.tableMode) {
+                val v = convertView as? ProcRowView ?: ProcRowView(this@MainActivity, table)
+                v.proc = items[position]
+                v.clkTck = clkTck
+                if (v.measuredHeight != table.rowH) v.requestLayout()
+                v.invalidate()
+                return v
+            }
+            val v = convertView as? ProcItemView ?: ProcItemView(this@MainActivity)
             v.proc = items[position]
+            v.metric = metric
+            v.maxValue = maxValue
             v.clkTck = clkTck
-            if (v.measuredHeight != table.rowH) v.requestLayout()
             v.invalidate()
             return v
         }

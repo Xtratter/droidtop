@@ -2,11 +2,12 @@ package io.github.xtratter.droidtop
 
 import android.app.AlertDialog
 import android.content.Intent
-import android.graphics.Typeface
+import android.text.TextUtils
+import android.view.View
+import android.widget.ImageView
 import android.net.Uri
 import android.provider.Settings
 import android.view.Gravity
-import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -16,32 +17,89 @@ import android.widget.Toast
 object ProcessDialog {
     fun show(a: MainActivity, p: ProcInfo, s: Snapshot) {
         val dp = a.resources.displayMetrics.density
-        val details = TextView(a).apply {
-            typeface = Typeface.MONOSPACE
-            textSize = 13f
-            setTextIsSelectable(true)
-            text = baseInfo(a, p, s)
-        }
+        fun px(v: Float) = (v * dp).toInt()
         val box = LinearLayout(a).apply {
             orientation = LinearLayout.VERTICAL
-            val pad = (20 * dp).toInt()
-            setPadding(pad, (8 * dp).toInt(), pad, 0)
-            addView(details)
+            setPadding(px(22f), px(22f), px(22f), px(8f))
         }
+
+        // шапка: значок, название, имя процесса
+        val head = LinearLayout(a).apply { gravity = Gravity.CENTER_VERTICAL }
+        val icon = AppIcons.get(p.pkg)
+        head.addView(if (icon != null) ImageView(a).apply { setImageBitmap(icon) } else TextView(a).apply {
+            text = p.title.trimStart('[', '/', '.', '@').take(1).uppercase()
+            gravity = Gravity.CENTER
+            textSize = 20f
+            typeface = Ui.medium
+            setTextColor(Ui.TEXT)
+            background = Ui.pill(a, 0x2EFFFFFF)
+        }, LinearLayout.LayoutParams(px(48f), px(48f)))
+        head.addView(LinearLayout(a).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(px(14f), 0, 0, 0)
+            addView(TextView(a).apply {
+                text = p.title; textSize = 20f; typeface = Ui.medium; setTextColor(Ui.TEXT)
+                maxLines = 2; ellipsize = TextUtils.TruncateAt.END
+            })
+            addView(TextView(a).apply {
+                text = if (p.title != p.name) p.name else a.getString(R.string.row_sub, p.pid, p.user.ifEmpty { "?" }, a.getString(stateName(p.state)))
+                textSize = 13f; setTextColor(Ui.TEXT2); maxLines = 2; ellipsize = TextUtils.TruncateAt.MIDDLE
+            })
+        }, LinearLayout.LayoutParams(0, -2, 1f))
+        box.addView(head)
+
+        // плитки с главными цифрами
+        fun tile(label: Int, value: String, color: Int) = LinearLayout(a).apply {
+            orientation = LinearLayout.VERTICAL
+            background = GlassDrawable(a, 18f)
+            setPadding(px(14f), px(10f), px(14f), px(12f))
+            addView(TextView(a).apply { setText(label); textSize = 12f; setTextColor(Ui.TEXT2) })
+            addView(TextView(a).apply { text = value; textSize = 18f; typeface = Ui.bold; setTextColor(color) })
+        }
+        fun row(vararg tiles: View) = LinearLayout(a).apply {
+            tiles.forEachIndexed { i, t ->
+                addView(t, LinearLayout.LayoutParams(0, -2, 1f).apply { if (i > 0) leftMargin = px(8f) })
+            }
+        }
+        val grid = LinearLayout(a).apply { orientation = LinearLayout.VERTICAL; setPadding(0, px(18f), 0, px(6f)) }
+        grid.addView(row(
+            tile(R.string.sort_cpu, Fmt.pct(p.cpu) + "%", Ui.load(p.cpu, 10f, 50f)),
+            tile(R.string.sort_mem, Fmt.size(p.rss) + " · " + Fmt.pct(p.mem) + "%", Ui.TEXT),
+        ))
+        grid.addView(row(
+            tile(R.string.sort_thr, p.threads.toString(), Ui.TEXT),
+            tile(R.string.sort_time, Fmt.cpuTime(p.cpuTicks, s.clkTck), Ui.TEXT),
+        ), LinearLayout.LayoutParams(-1, -2).apply { topMargin = px(8f) })
+        box.addView(grid)
+
+        val details = TextView(a).apply {
+            textSize = 13f
+            setTextColor(Ui.TEXT2)
+            setLineSpacing(0f, 1.2f)
+            setTextIsSelectable(true)
+            text = baseInfo(a, p, s)
+            setPadding(px(4f), px(10f), px(4f), px(10f))
+        }
+        box.addView(details)
+
         val dialog = AlertDialog.Builder(a)
-            .setTitle(p.title)
             .setView(ScrollView(a).apply { addView(box) })
             .setNegativeButton(R.string.close, null)
             .create()
 
+        // действия — тональные кнопки-«пилюли»
         fun action(text: Int, danger: Boolean = false, block: () -> Unit) {
-            box.addView(Button(a, null, android.R.attr.borderlessButtonStyle).apply {
+            val color = if (danger) Ui.HOT else Ui.primary
+            box.addView(TextView(a).apply {
                 setText(text)
-                gravity = Gravity.START or Gravity.CENTER_VERTICAL
-                isAllCaps = false
-                if (danger) setTextColor(Palette.RED)
+                gravity = Gravity.CENTER
+                textSize = 15f
+                typeface = Ui.medium
+                setTextColor(color)
+                background = Ui.pill(a, Ui.withAlpha(color, 0.14f), Ui.withAlpha(color, 0.3f))
+                foreground = Ui.ripple(a, 100f)
                 setOnClickListener { dialog.dismiss(); block() }
-            })
+            }, LinearLayout.LayoutParams(-1, px(48f)).apply { topMargin = px(8f) })
         }
 
         action(R.string.act_term) { signal(a, p, "TERM") }
@@ -58,6 +116,7 @@ object ProcessDialog {
             }
         }
         dialog.show()
+        Ui.glassDialog(dialog)
 
         // полная командная строка и то, чего нет в /proc/PID/stat
         val dir = "/proc/${p.pid}"
@@ -83,11 +142,9 @@ object ProcessDialog {
     private fun baseInfo(a: MainActivity, p: ProcInfo, s: Snapshot): String {
         val age = (s.uptime - p.startTicks.toDouble() / s.clkTck).toLong().coerceAtLeast(0)
         val lines = ArrayList<String>()
-        if (p.title != p.name) lines += p.name
         lines += a.getString(R.string.d_ids, p.pid, p.ppid, p.user.ifEmpty { "?" })
         lines += a.getString(R.string.d_state, p.state.toString(), a.getString(stateName(p.state)))
         lines += a.getString(R.string.d_threads, p.threads, p.nice, p.prio)
-        lines += a.getString(R.string.d_cpu, Fmt.pct(p.cpu), Fmt.cpuTime(p.cpuTicks, s.clkTck))
         lines += a.getString(R.string.d_mem, Fmt.size(p.rss), Fmt.pct(p.mem), Fmt.size(p.vsize))
         lines += a.getString(R.string.d_started, duration(a, age))
         if (p.kernel) lines += a.getString(R.string.d_kernel)
@@ -120,7 +177,7 @@ object ProcessDialog {
                 .setMessage(R.string.warn_system)
                 .setPositiveButton(R.string.do_it) { _, _ -> go() }
                 .setNegativeButton(android.R.string.cancel, null)
-                .show()
+                .show().also { Ui.glassDialog(it) }
         } else go()
     }
 

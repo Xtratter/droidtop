@@ -16,6 +16,7 @@ class ProcRowView(ctx: Context, private val table: Table) : View(ctx) {
 
     override fun onDraw(c: Canvas) {
         val p = proc ?: return
+        c.translate(Ui.dp(context, 12f), 0f)   // как у заголовка, который лежит в шапке с отступами
         table.drawRow(c, { col ->
             when (col) {
                 Col.PID -> p.pid.toString()

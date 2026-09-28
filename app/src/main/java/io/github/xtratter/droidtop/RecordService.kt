@@ -86,8 +86,12 @@ class RecordService : Service(), Sampler.Listener {
         io.execute { try { o.write((line + "\n").toByteArray()); o.flush() } catch (_: Exception) {} }
     }
 
+    private var lastSnap: Snapshot? = null
+
     override fun onSnapshot(s: Snapshot) {
-        if (current == null) return
+        // тот же замер приходит повторно, когда догрузились значки приложений
+        if (current == null || s === lastSnap) return
+        lastSnap = s
         val a = Record.sample(target, s)
         stats.add(a)
         val elapsed = (SystemClock.elapsedRealtime() - startedAt) / 1000.0

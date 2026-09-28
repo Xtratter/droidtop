@@ -98,7 +98,7 @@ object Inspect {
             val f = l.substring(path.length + 1).trim().split(Regex("\\s+"))
             if (proto == "unix") {
                 val inode = f.getOrNull(6)?.toLongOrNull() ?: continue
-                map[inode] = "unix" + (f.getOrNull(7)?.let { " $it" } ?: "")
+                map[inode] = "unix " + (f.getOrNull(7) ?: "socket:[$inode]")
                 continue
             }
             val inode = f.getOrNull(9)?.toLongOrNull() ?: continue

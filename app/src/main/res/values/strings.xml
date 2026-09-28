@@ -293,4 +293,5 @@
     <string name="sum_load">Load: %1$s %2$s %3$s</string>
     <string name="sum_tasks">processes %1$d, threads %2$d</string>
     <string name="sum_top">Top %1$d by CPU (PID, CPU, RES, name):</string>
+    <string name="dev_kernel_build">Kernel build</string>
 </resources>

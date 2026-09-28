@@ -72,4 +72,13 @@ class DeviceInfoTest {
         assertEquals("Kryo Silver", DeviceInfo.coreName(0x51, 0x805))
         assertNull(DeviceInfo.coreName(0x41, 0x123))
     }
+
+    @Test
+    fun shortensKernelVersion() {
+        val (rel, build) = DeviceInfo.kernel("Linux version 4.19.404-InfiniR_Alioth_KSUN_raystef66 (build-user@build-host) " +
+            "(Android (14054515, +pgo, based on r563880c) clang version 21.0.0, LLD 21.0.0) #4 SMP PREEMPT Wed Feb 4 19:50:32 CET 2026")
+        assertEquals("4.19.404-InfiniR_Alioth_KSUN_raystef66", rel)
+        assertEquals("clang 21.0.0 · Wed Feb 4 19:50:32 CET 2026", build)
+        assertEquals(null to null, DeviceInfo.kernel(""))
+    }
 }

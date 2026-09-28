@@ -292,4 +292,5 @@
     <string name="sum_load">Нагрузка: %1$s %2$s %3$s</string>
     <string name="sum_tasks">процессов %1$d, потоков %2$d</string>
     <string name="sum_top">Топ-%1$d по CPU (PID, CPU, RES, имя):</string>
+    <string name="dev_kernel_build">Сборка ядра</string>
 </resources>

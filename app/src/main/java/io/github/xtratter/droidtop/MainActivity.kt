@@ -39,6 +39,7 @@ class MainActivity : Activity(), Sampler.Listener {
     private lateinit var table: Table
     private lateinit var list: ListView
     private lateinit var topBar: View
+    private lateinit var headerBox: LinearLayout
     private lateinit var modeChip: TextView
     private lateinit var btnPause: ImageButton
     private lateinit var btnOverlay: ImageButton
@@ -184,10 +185,14 @@ class MainActivity : Activity(), Sampler.Listener {
         if (topScrim.layoutParams.height != scrimH) topScrim.post {
             topScrim.layoutParams = topScrim.layoutParams.apply { height = scrimH }
         }
+        // отступ под панель — внутри шапки, а не у списка: ListView при смене своего paddingTop
+        // держит первую карточку на старом месте, и «Процессор» уезжал под панель при запуске
         val top = topBar.height + dp(10f)
         val bottom = insetBottom + dp(16f)
-        if (list.paddingTop != top || list.paddingBottom != bottom)
-            list.post { list.setPadding(list.paddingLeft, top, list.paddingRight, bottom) }
+        if (headerBox.paddingTop != top || list.paddingBottom != bottom) list.post {
+            headerBox.setPadding(headerBox.paddingLeft, top, headerBox.paddingRight, headerBox.paddingBottom)
+            list.setPadding(list.paddingLeft, 0, list.paddingRight, bottom)
+        }
     }
 
     private fun setupTopBar() {
@@ -228,6 +233,7 @@ class MainActivity : Activity(), Sampler.Listener {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(12f), 0, dp(12f), dp(4f))
         }
+        headerBox = box
         fun <T : View> add(v: T, bottom: Float = 10f): T {
             box.addView(v, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
                 .apply { bottomMargin = dp(bottom) })

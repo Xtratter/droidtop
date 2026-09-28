@@ -2,6 +2,13 @@
 
 [Русский](CHANGELOG.ru.md) · **English**
 
+## 1.9.1 — 2026-09-28
+
+- The CPU card no longer hides under the top bar and status bar when the app starts: the space for the bar now belongs to the list header instead of the list padding, which ListView kept stale while the bar size arrived
+- Device info: the kernel line shows just the release; the compiler and build date moved to a separate "Kernel build" line
+- Open files: unnamed Unix sockets show their number (`unix socket:[12345]`)
+- Stats recording: no duplicate row when the same sample is redelivered after app icons load
+
 ## 1.9 — 2026-09-28
 
 - **Device info** (⋮ → Device info), in the spirit of AIDA64: device and model, Android, security patch, firmware, kernel, SELinux, bootloader; SoC with core clusters (Cortex names, frequency ranges, governor); RAM, swap and zram, storage size and type; display resolution, diagonal, density, refresh rates, HDR; GPU with OpenGL ES and Vulkan versions; battery health, technology, charge cycles, design and current capacity; cameras; sensors; all temperature sensors. Tap a line to copy it, long-press a section title to copy the section, or "Copy all"

@@ -1,0 +1,4 @@
+- CPU card no longer under the top bar at start
+- Kernel line shortened, separate "Kernel build"
+- Unnamed Unix sockets show their number
+- No duplicate rows in stats recording

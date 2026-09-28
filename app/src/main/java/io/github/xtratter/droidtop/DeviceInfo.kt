@@ -167,7 +167,9 @@ object DeviceInfo {
             add(s(R.string.dev_build), Build.DISPLAY)
             add(s(R.string.dev_incremental), p["ro.build.version.incremental"])
             add(s(R.string.dev_fingerprint), Build.FINGERPRINT)
-            add(s(R.string.dev_kernel), raw.kernel.ifEmpty { System.getProperty("os.version") })
+            val k = kernel(raw.kernel)
+            add(s(R.string.dev_kernel), k.first ?: System.getProperty("os.version"))
+            add(s(R.string.dev_kernel_build), k.second)
             add("SELinux", raw.selinux)
             add(s(R.string.dev_first_api), p["ro.product.first_api_level"])
             add("Treble", p["ro.treble.enabled"]?.let { if (it == "true") s(R.string.yes) else s(R.string.no) })
@@ -309,6 +311,15 @@ object DeviceInfo {
             for ((name, t) in raw.thermal) add(name, String.format(Locale.getDefault(), "%.1f°C", t))
         }
         return out.filter { it.rows.isNotEmpty() }
+    }
+
+    /** «Linux version X (…) (… clang version 21.0.0 …) #4 SMP PREEMPT <дата>» → X и «clang 21.0.0 · дата». */
+    fun kernel(v: String): Pair<String?, String?> {
+        if (!v.startsWith("Linux version ")) return null to null
+        val release = v.removePrefix("Linux version ").substringBefore(' ')
+        val cc = Regex("(clang|gcc) version ([\\w.]+)").find(v)?.let { "${it.groupValues[1]} ${it.groupValues[2]}" }
+        val date = Regex("#\\d+\\s+(?:SMP\\s+)?(?:PREEMPT\\S*\\s+)?(.+)$").find(v)?.groupValues?.get(1)
+        return release to listOfNotNull(cc, date).joinToString(" · ").ifEmpty { null }
     }
 
     /** Паспортная ёмкость из системного PowerProfile (скрытый класс, работает без root). */

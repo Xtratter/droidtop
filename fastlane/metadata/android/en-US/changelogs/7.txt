@@ -1,0 +1,6 @@
+Much lower CPU and battery use:
+- One process per update instead of about seven, faster /proc parsing
+- Charts cached instead of redrawn on every animation frame
+- Overlay without animation; it stops polling while the screen is off
+- Main screen paused under open dialogs
+- Release build with R8: 130 KB APK

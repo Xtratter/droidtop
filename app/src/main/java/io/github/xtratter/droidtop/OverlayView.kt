@@ -22,15 +22,20 @@ class OverlayView(ctx: Context) : View(ctx) {
     private val p = Paint(Paint.ANTI_ALIAS_FLAG)
     private val trackP = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Ui.TRACK }
     private val r = RectF()
-    private val smooth = Smooth(this)
+    // без анимации: каждый её кадр заставлял бы систему пересобирать весь экран под оверлеем
+    private val smooth = Smooth(this, animate = false)
     private var glass: GlassDrawable? = null
     private var barShader: Shader? = null
     private val coresH = dp(30f)
 
+    /** Самые активные процессы текущего замера — считаем один раз, а не в каждом кадре анимации. */
+    private var topProcs: List<ProcInfo> = emptyList()
+
     var snapshot: Snapshot? = null
         set(v) {
-            val rows = v?.let { top(it).size }
-            val relayout = field?.let { top(it).size } != rows || (field?.gpu == null) != (v?.gpu == null)
+            val oldRows = topProcs.size
+            topProcs = v?.let { top(it) } ?: emptyList()
+            val relayout = field == null || oldRows != topProcs.size || (field?.gpu == null) != (v?.gpu == null)
             field = v
             if (v != null) {
                 val f = FloatArray(v.cores.size + 2)
@@ -49,7 +54,9 @@ class OverlayView(ctx: Context) : View(ctx) {
             invalidate()
         }
     var topCount = 3
+        set(v) { field = v; snapshot?.let { topProcs = top(it) } }
     var kernelThreads = false
+        set(v) { field = v; snapshot?.let { topProcs = top(it) } }
     var bgAlpha = 0.85f
         set(v) { field = v; glass = null; invalidate() }
 
@@ -59,7 +66,7 @@ class OverlayView(ctx: Context) : View(ctx) {
             .sortedByDescending { it.cpu }.take(topCount).toList()
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val n = snapshot?.let { top(it).size } ?: 0
+        val n = topProcs.size
         var h = pad * 2 + dp(14f) + dp(32f) + dp(8f) + coresH + dp(12f) + dp(14f) + dp(10f)
         if (snapshot?.battery?.currentMa?.let { it > 0f } == true) h += dp(20f)
         if (snapshot?.gpu != null) h += dp(34f)
@@ -159,7 +166,7 @@ class OverlayView(ctx: Context) : View(ctx) {
         }
 
         // топ процессов
-        val procs = top(s)
+        val procs = topProcs
         if (procs.isNotEmpty()) {
             y += dp(4f)
             for (pr in procs) {

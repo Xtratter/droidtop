@@ -1,5 +1,6 @@
 package io.github.xtratter.droidtop
 
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.LinearGradient
 import android.graphics.Paint
@@ -21,6 +22,7 @@ class Chart(private val view: View) {
 
     val rect = RectF()
     var values = FloatArray(0)
+        set(v) { field = v; dirty = true }
     /** Верх шкалы; при [autoMax] — не меньше этого значения. */
     var maxY = 100f
     var autoMax = false
@@ -49,6 +51,15 @@ class Chart(private val view: View) {
     private var pinchDist = 0f
     private var pinchSpan = 0
 
+    // Готовая картинка графика: перерисовываем её только при новых данных, а кадры анимации
+    // карточки (числа, столбики) просто кладут её на место — линия в 600 точек не строится заново.
+    private var cache: Bitmap? = null
+    private var cacheCanvas: Canvas? = null
+    private var dirty = true
+    private val cacheRect = RectF()
+    private var cacheSpan = 0
+    private var cacheColor = 0
+
     companion object {
         /** Сколько последних точек видно на графиках; общий для всех, меняется щипком. */
         var span = 150
@@ -56,6 +67,32 @@ class Chart(private val view: View) {
     }
 
     fun draw(c: Canvas) {
+        // запас вокруг области графика: сверху подписи шкалы, по краям точка «сейчас»
+        val side = dp(8f)
+        val above = dp(24f)
+        val w = (rect.width() + 2 * side).toInt()
+        val h = (rect.height() + above + side).toInt()
+        if (w <= 0 || h <= 0) return
+        var b = cache
+        if (b == null || b.width != w || b.height != h) {
+            b?.recycle()
+            b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+            cache = b; cacheCanvas = Canvas(b); dirty = true
+        }
+        if (dirty || cacheRect != rect || cacheSpan != span || cacheColor != color) {
+            dirty = false; cacheRect.set(rect); cacheSpan = span; cacheColor = color
+            b.eraseColor(0)
+            val cc = cacheCanvas!!
+            cc.save()
+            cc.translate(side - rect.left, above - rect.top)
+            drawStatic(cc)
+            cc.restore()
+        }
+        c.drawBitmap(b, rect.left - side, rect.top - above, null)
+        if (touchX >= 0 && pinchDist == 0f) drawTouch(c)
+    }
+
+    private fun drawStatic(c: Canvas) {
         // видимое окно — последние span точек
         val all = values.size
         val from = (all - shown).coerceAtLeast(0)
@@ -101,25 +138,37 @@ class Chart(private val view: View) {
         // точка «сейчас»
         dot.color = Ui.base; c.drawCircle(x(n - 1), y(v(n - 1)), dp(5f), dot)
         dot.color = color; c.drawCircle(x(n - 1), y(v(n - 1)), dp(3.5f), dot)
+    }
 
-        if (touchX >= 0 && pinchDist == 0f) {
-            val i = (n - 1 - ((rect.right - touchX) / step).roundToInt()).coerceIn(0, n - 1)
-            val px = x(i)
-            val py = y(v(i))
-            c.drawLine(px, rect.top, px, rect.bottom, cross)
-            dot.color = Ui.base; c.drawCircle(px, py, dp(6f), dot)
-            dot.color = color; c.drawCircle(px, py, dp(4f), dot)
-            val ago = ((n - 1 - i) * History.secondsPerPoint).roundToInt()
-            val tip = format(v(i)) + " · " +
-                if (ago == 0) ctx.getString(R.string.ch_now) else ctx.getString(R.string.ch_ago, Human.ago(ctx, ago))
-            val tw = tipP.measureText(tip) + dp(20f)
-            val th = dp(28f)
-            val left = (px - tw / 2).coerceIn(rect.left, rect.right - tw)
-            val tTop = (py - th - dp(10f)).let { if (it < rect.top - th) py + dp(10f) else it }
-            tipRect.set(left, tTop, left + tw, tTop + th)
-            c.drawRoundRect(tipRect, th / 2, th / 2, tipBg)
-            c.drawText(tip, left + dp(10f), tipRect.centerY() - (tipP.ascent() + tipP.descent()) / 2, tipP)
-        }
+    /** Вертикаль и подсказка под пальцем — поверх готовой картинки. */
+    private fun drawTouch(c: Canvas) {
+        val all = values.size
+        val from = (all - shown).coerceAtLeast(0)
+        val n = all - from
+        if (n < 2) return
+        val h = rect.height()
+        val top = maxY(from)
+        val step = rect.width() / (shown - 1)
+        fun x(i: Int) = rect.right - (n - 1 - i) * step
+        fun y(v: Float) = rect.bottom - h * (v / top).coerceIn(0f, 1f)
+        fun v(i: Int) = values[from + i]
+
+        val i = (n - 1 - ((rect.right - touchX) / step).roundToInt()).coerceIn(0, n - 1)
+        val px = x(i)
+        val py = y(v(i))
+        c.drawLine(px, rect.top, px, rect.bottom, cross)
+        dot.color = Ui.base; c.drawCircle(px, py, dp(6f), dot)
+        dot.color = color; c.drawCircle(px, py, dp(4f), dot)
+        val ago = ((n - 1 - i) * History.secondsPerPoint).roundToInt()
+        val tip = format(v(i)) + " · " +
+            if (ago == 0) ctx.getString(R.string.ch_now) else ctx.getString(R.string.ch_ago, Human.ago(ctx, ago))
+        val tw = tipP.measureText(tip) + dp(20f)
+        val th = dp(28f)
+        val left = (px - tw / 2).coerceIn(rect.left, rect.right - tw)
+        val tTop = (py - th - dp(10f)).let { if (it < rect.top - th) py + dp(10f) else it }
+        tipRect.set(left, tTop, left + tw, tTop + th)
+        c.drawRoundRect(tipRect, th / 2, th / 2, tipBg)
+        c.drawText(tip, left + dp(10f), tipRect.centerY() - (tipP.ascent() + tipP.descent()) / 2, tipP)
     }
 
     private fun maxY(from: Int): Float {

@@ -68,7 +68,9 @@ Pick the mode by tapping the chip next to the title or via ⋮ → "Access mode"
 No native libraries: the app keeps a shell (`sh` or `su`) open and every few seconds reads
 `/proc/stat`, `/proc/meminfo`, `/proc/[pid]/stat`, frequencies from `/sys/devices/system/cpu`,
 temperatures from `/sys/class/thermal` and GPU data from `/sys/class/kgsl` or `/sys/kernel/gpu`
-with a single command. Full process names come from `ps`, only for new PIDs.
+with a single `grep` call — one short-lived process per update. Full process names come from `ps`,
+only for new PIDs. While only the overlay is shown, names are looked up just for the busiest processes,
+and when the screen is off polling stops completely.
 
 ```
 app/src/main/java/io/github/xtratter/droidtop/
@@ -95,6 +97,7 @@ app/src/main/java/io/github/xtratter/droidtop/
 
 ```sh
 ./gradlew assembleDebug        # → app/build/outputs/apk/debug/app-debug.apk
+./gradlew assembleRelease      # → release build (R8), sign it with apksigner
 ./gradlew testDebugUnitTest    # /proc and GPU parsing tests
 ```
 

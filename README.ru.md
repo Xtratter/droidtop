@@ -69,8 +69,11 @@
 
 Никаких нативных библиотек: приложение держит открытую оболочку (`sh` или `su`) и раз в
 несколько секунд одной командой читает `/proc/stat`, `/proc/meminfo`, `/proc/[pid]/stat`,
-частоты из `/sys/devices/system/cpu` и температуры из `/sys/class/thermal`. Полные имена
-процессов берутся из `ps` только для новых PID.
+частоты из `/sys/devices/system/cpu`, температуры из `/sys/class/thermal` и данные видеочипа
+из `/sys/class/kgsl` или `/sys/kernel/gpu` — это один вызов `grep`, то есть один короткий процесс
+за обновление. Полные имена процессов берутся из `ps` только для новых PID. Когда открыт только
+оверлей, имена ищутся лишь для самых активных процессов, а при выключенном экране опрос
+полностью останавливается.
 
 ```
 app/src/main/java/io/github/xtratter/droidtop/
@@ -97,6 +100,7 @@ app/src/main/java/io/github/xtratter/droidtop/
 
 ```sh
 ./gradlew assembleDebug        # → app/build/outputs/apk/debug/app-debug.apk
+./gradlew assembleRelease      # → release-сборка (R8), подписать через apksigner
 ./gradlew testDebugUnitTest    # тесты разбора /proc
 ```
 

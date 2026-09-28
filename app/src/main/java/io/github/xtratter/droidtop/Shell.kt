@@ -18,20 +18,23 @@ class Shell private constructor(private val proc: Process, val access: Access) {
     private var seq = 0
 
     /** Выполнить команду и вернуть её вывод; null — оболочка умерла. */
+    fun run(cmd: String): String? = runLines(cmd)?.joinToString("") { it + "\n" }
+
+    /** То же, но построчно — без склейки большого вывода в одну строку и повторной нарезки. */
     @Synchronized
-    fun run(cmd: String): String? {
+    fun runLines(cmd: String): List<String>? {
         val mark = "__DROIDTOP_${++seq}__"
         return try {
             input.write(cmd)
             input.write("\nprintf '\\n%s\\n' $mark\n")
             input.flush()
-            val sb = StringBuilder()
+            val out = ArrayList<String>(1024)
             while (true) {
                 val line = output.readLine() ?: run { close(); return null }
                 if (line == mark) break
-                sb.append(line).append('\n')
+                out += line
             }
-            sb.toString()
+            out
         } catch (e: IOException) {
             close()
             null

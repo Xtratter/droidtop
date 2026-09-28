@@ -318,11 +318,13 @@ class MainActivity : Activity(), Sampler.Listener {
 
     override fun onStart() {
         super.onStart()
+        Ui.onDialogsClosed = { render() }
         Sampler.add(this)
     }
 
     override fun onStop() {
         Sampler.remove(this)
+        Ui.onDialogsClosed = null
         super.onStop()
     }
 
@@ -341,6 +343,7 @@ class MainActivity : Activity(), Sampler.Listener {
     }
 
     private fun render() {
+        if (Ui.openDialogs > 0) return      // догоним, когда диалог закроется
         val s = snapshot ?: return
         // текст и фон меняем только при изменении: любой setText в шапке списка перераскладывает весь список
         if (shownAccess != s.access) {

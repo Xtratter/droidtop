@@ -2,6 +2,17 @@
 
 [Русский](CHANGELOG.ru.md) · **English**
 
+## 1.6 — 2026-09-28
+
+Uses much less CPU and battery:
+- One process per update instead of about seven: all files are read with a single `grep`
+- Faster parsing of `/proc/[pid]/stat` without thousands of temporary strings
+- Charts are drawn once per update and cached, not on every animation frame
+- The overlay no longer animates: each animation frame made the system redraw the whole screen under it
+- The overlay stops polling while the screen is off; when it is the only thing shown, names and icons are looked up only for the busiest processes
+- The main screen is not updated under an open dialog (the blur behind the dialog is no longer recomputed)
+- Release build with R8: the APK is 130 KB instead of 1 MB, and the code runs faster than the old debug build
+
 ## 1.5 — 2026-09-28
 
 - Pinch to zoom in the htop table: spread or pinch two fingers to make the table and meters text bigger or smaller (7 to 28 sp); the size is remembered

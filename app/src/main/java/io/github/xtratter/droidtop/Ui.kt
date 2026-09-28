@@ -106,9 +106,24 @@ object Ui {
         if (stroke != 0) setStroke(dp(ctx, 1f).toInt().coerceAtLeast(1), stroke)
     }
 
+    /** Сколько «стеклянных» диалогов сейчас открыто. */
+    var openDialogs = 0; private set
+    /** Вызывается, когда закрылся последний диалог. */
+    var onDialogsClosed: (() -> Unit)? = null
+
     /** Оформить диалог стеклом; на Android 12+ ещё и размыть то, что под ним. */
     fun glassDialog(d: AlertDialog) {
         val w = d.window ?: return
+        // под размытым диалогом главный экран не обновляем: каждое его изменение заставляет
+        // систему заново размывать весь экран, а под стеклом всё равно ничего не разобрать
+        openDialogs++
+        w.decorView.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+            override fun onViewAttachedToWindow(v: View) {}
+            override fun onViewDetachedFromWindow(v: View) {
+                v.removeOnAttachStateChangeListener(this)
+                if (--openDialogs == 0) onDialogsClosed?.invoke()
+            }
+        })
         val ctx = d.context
         val blur = Build.VERSION.SDK_INT >= 31 &&
             ctx.getSystemService(WindowManager::class.java).isCrossWindowBlurEnabled
@@ -227,8 +242,11 @@ object PillBar {
     }
 }
 
-/** Плавный «пружинистый» переход между значениями (для полосок и больших чисел). */
-class Smooth(private val view: View) {
+/**
+ * Плавный «пружинистый» переход между значениями (для полосок и больших чисел).
+ * [animate] = false — значения меняются сразу, одним кадром.
+ */
+class Smooth(private val view: View, private val animate: Boolean = true) {
     var cur = FloatArray(0); private set
     private var from = FloatArray(0)
     private var to = FloatArray(0)
@@ -243,7 +261,7 @@ class Smooth(private val view: View) {
     }
 
     fun set(values: FloatArray) {
-        if (values.size != cur.size || !view.isAttachedToWindow) {
+        if (!animate || values.size != cur.size || !view.isAttachedToWindow) {
             anim.cancel()
             cur = values.copyOf(); from = values.copyOf(); to = values.copyOf()
             view.invalidate()

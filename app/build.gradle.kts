@@ -11,8 +11,19 @@ android {
         applicationId = "io.github.xtratter.droidtop"
         minSdk = 26
         targetSdk = 35
-        versionCode = 6
-        versionName = "1.5"
+        versionCode = 7
+        versionName = "1.6"
+    }
+    buildTypes {
+        release {
+            // R8: сжатие и оптимизация кода — приложение меньше и быстрее, чем debug-сборка
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

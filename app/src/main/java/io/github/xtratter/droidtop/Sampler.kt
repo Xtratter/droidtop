@@ -18,7 +18,13 @@ import java.util.concurrent.CopyOnWriteArrayList
 object Sampler {
     fun interface Listener {
         fun onSnapshot(s: Snapshot)
+
+        /** Нужны ли слушателю имена и значки всех процессов (оверлею хватает самых активных). */
+        val needsAllProcs: Boolean get() = true
     }
+
+    /** Сколько самых активных процессов подписывать, когда весь список никому не нужен. */
+    private const val TOP_NAMED = 24
 
     private lateinit var app: Context
     private lateinit var prefs: Prefs
@@ -43,7 +49,7 @@ object Sampler {
     }
 
     fun add(l: Listener) {
-        listeners += l
+        if (!listeners.addIfAbsent(l)) return
         last?.let { l.onSnapshot(it) }
         handler.post { if (!ticking) { ticking = true; tick.run() } }
     }
@@ -95,8 +101,10 @@ object Sampler {
                     listeners.forEach { it.onSnapshot(s) }
                 }
                 // значки приложений грузим после показа, чтобы не задерживать первый кадр
-                val pkgs = s.procs.mapNotNullTo(HashSet()) { it.pkg }
-                if (AppIcons.load(app, pkgs)) main.post { listeners.forEach { it.onSnapshot(s) } }
+                if (listeners.any { it.needsAllProcs }) {
+                    val pkgs = s.procs.mapNotNullTo(HashSet()) { it.pkg }
+                    if (AppIcons.load(app, pkgs)) main.post { listeners.forEach { it.onSnapshot(s) } }
+                }
             }
             // первый замер не даёт загрузку CPU — второй делаем быстро
             val delay = if (primed) prefs.intervalMs.toLong() else 600L
@@ -106,7 +114,7 @@ object Sampler {
 
     private fun sample(): Snapshot? {
         val sh = openShell() ?: return null
-        val out = sh.run(parser.script())
+        val out = sh.runLines(parser.script())
         if (out == null) { shell = null; return null }
 
         val am = app.getSystemService(ActivityManager::class.java)
@@ -117,13 +125,16 @@ object Sampler {
         )
         snap.battery = try { Battery.read(app) } catch (e: Exception) { null }
 
-        val missing = parser.missingNames(snap.procs)
+        // только оверлей: полные имена и названия нужны лишь самым активным процессам
+        val named = if (listeners.any { it.needsAllProcs }) snap.procs
+        else snap.procs.sortedByDescending { it.cpu }.take(TOP_NAMED)
+        val missing = parser.missingNames(named)
         val psOut = if (missing.isNotEmpty()) sh.run(parser.psCommand(missing)) else null
         parser.applyNames(psOut, snap.procs, missing)
 
         val useLabels = prefs.appLabels
         val pm = app.packageManager
-        for (p in snap.procs) {
+        for (p in named) {
             val pkg = p.name.substringBefore(':')
             val label = if ('.' in pkg && '/' !in pkg) labelOf(pm, pkg) else null
             p.pkg = if (label != null) pkg else null

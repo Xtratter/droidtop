@@ -60,13 +60,11 @@ class GpuTest {
     fun parserPicksGpuThermalZones() {
         val parser = ProcParser(4096, 100)
         val out = parser.script()
-        assertTrue("@G" in out && "@Z" in out)
+        assertTrue("gpu_busy_percentage" in out && "thermal_zone*/type" in out)
         val s = parser.parse("""
-@Z
 /sys/class/thermal/thermal_zone1/type:cpu-0-0-usr
 /sys/class/thermal/thermal_zone20/type:gpuss-0-usr
 /sys/class/thermal/thermal_zone21/type:gpuss-max-step
-@G
 /sys/class/kgsl/kgsl-3d0/gpu_busy_percentage:5 %
 """.trimIndent(), Access.ROOT, 100.0, longArrayOf(0, 0))
         assertEquals(5f, s.gpu!!.busy, 0.01f)
@@ -74,10 +72,8 @@ class GpuTest {
         assertTrue("thermal_zone20/temp" in next && "thermal_zone21" !in next)
         assertTrue("gpu_busy_percentage" in next && "gpubusy" !in next)
         val s2 = parser.parse("""
-@T
 /sys/class/thermal/thermal_zone1/temp:52000
 /sys/class/thermal/thermal_zone20/temp:44000
-@G
 /sys/class/kgsl/kgsl-3d0/gpu_busy_percentage:9 %
 """.trimIndent(), Access.ROOT, 101.0, longArrayOf(0, 0))
         assertEquals(52f, s2.cpuTemp, 0.01f)

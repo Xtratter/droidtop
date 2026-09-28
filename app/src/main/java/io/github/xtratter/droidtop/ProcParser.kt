@@ -20,42 +20,63 @@ class ProcParser(private val pageSize: Long, private val clkTck: Long) {
     /** Есть ли прошлый замер (без него загрузку CPU не посчитать). */
     val primed get() = prevUptime >= 0
 
+    /**
+     * Одна команда на замер: один `grep` читает все файлы и подписывает каждую строку путём
+     * («/proc/stat:cpu …»), поэтому новых процессов за такт запускается ровно один.
+     * Строку `intr` из /proc/stat (тысячи чисел) пропускаем — она не нужна.
+     */
     fun script(): String = buildString {
-        append("echo @S; cat /proc/stat\n")
-        append("echo @M; cat /proc/meminfo\n")
-        append("echo @L; cat /proc/loadavg\n")
-        append("echo @U; cat /proc/uptime\n")
-        append("echo @F; grep -sH '' /sys/devices/system/cpu/cpu[0-9]*/cpufreq/scaling_cur_freq\n")
-        if (maxFreq.isEmpty())
-            append("echo @X; grep -sH '' /sys/devices/system/cpu/cpu[0-9]*/cpufreq/cpuinfo_max_freq\n")
+        append("grep -svH '^intr ' /proc/stat /proc/meminfo /proc/loadavg /proc/uptime")
+        append(" /sys/devices/system/cpu/cpu[0-9]*/cpufreq/scaling_cur_freq")
+        if (maxFreq.isEmpty()) append(" /sys/devices/system/cpu/cpu[0-9]*/cpufreq/cpuinfo_max_freq")
         val t = thermal
-        if (t == null) append("echo @Z; grep -sH '' /sys/class/thermal/thermal_zone*/type\n")
-        else if (t.isNotEmpty()) append("echo @T; grep -sH '' ${t.joinToString(" ")}\n")
-        val g = gpuPaths ?: Gpu.PATHS
-        if (g.isNotEmpty()) append("echo @G; grep -sH '' ${g.joinToString(" ")}\n")
-        append("echo @P; cat /proc/[0-9]*/stat\n")
+        if (t == null) append(" /sys/class/thermal/thermal_zone*/type")
+        else for (p in t) append(' ').append(p)
+        for (p in gpuPaths ?: Gpu.PATHS) append(' ').append(p)
+        append(" /proc/[0-9]*/stat\n")
     }
 
+    fun parse(out: String, access: Access, uptimeFallback: Double, memFallback: LongArray) =
+        parse(out.split('\n'), access, uptimeFallback, memFallback)
+
     /**
-     * Разобрать вывод [script].
+     * Разобрать вывод [script] — строки «путь:содержимое».
      * [memFallback] — {всего, доступно} от ActivityManager на случай, если /proc/meminfo закрыт.
      */
-    fun parse(out: String, access: Access, uptimeFallback: Double, memFallback: LongArray): Snapshot {
-        val sec = HashMap<Char, MutableList<String>>()
-        var cur: MutableList<String>? = null
-        for (line in out.split('\n')) {
-            if (line.length == 2 && line[0] == '@') {
-                cur = sec.getOrPut(line[1]) { ArrayList() }
-            } else if (line.isNotBlank()) {
-                cur?.add(line)
+    fun parse(lines: List<String>, access: Access, uptimeFallback: Double, memFallback: LongArray): Snapshot {
+        val stat = ArrayList<String>()
+        val mem = ArrayList<String>()
+        var loadLine: String? = null
+        var uptimeLine: String? = null
+        val freqLines = ArrayList<String>()
+        val maxLines = ArrayList<String>()
+        val zoneLines = ArrayList<String>()
+        val tempLines = ArrayList<String>()
+        val gpuLines = ArrayList<String>()
+        val procLines = ArrayList<String>()
+        val gpuSet = gpuPaths ?: Gpu.PATHS
+        for (l in lines) {
+            val c = l.indexOf(':')
+            if (c <= 0 || c == l.length - 1) continue
+            when {
+                isProcStat(l, c) -> procLines += l
+                l.startsWith("/proc/stat:") -> stat += l.substring(c + 1)
+                l.startsWith("/proc/meminfo:") -> mem += l.substring(c + 1)
+                l.startsWith("/proc/loadavg:") -> loadLine = l.substring(c + 1)
+                l.startsWith("/proc/uptime:") -> uptimeLine = l.substring(c + 1)
+                l.startsWith("/sys/devices/system/cpu/") ->
+                    if (l.regionMatches(c - 16, "scaling_cur_freq", 0, 16)) freqLines += l else maxLines += l
+                l.startsWith("/sys/class/thermal/") ->
+                    if (l.regionMatches(c - 5, "/type", 0, 5)) zoneLines += l else tempLines += l
+                else -> if (l.substring(0, c) in gpuSet) gpuLines += l
             }
         }
 
-        val uptime = sec['U']?.firstOrNull()?.substringBefore(' ')?.toDoubleOrNull() ?: uptimeFallback
+        val uptime = uptimeLine?.substringBefore(' ')?.toDoubleOrNull() ?: uptimeFallback
 
         // CPU: /proc/stat
         val cpuNow = HashMap<String, LongArray>()
-        for (l in sec['S'].orEmpty()) {
+        for (l in stat) {
             if (!l.startsWith("cpu")) continue
             val p = l.split(' ').filter { it.isNotEmpty() }
             val v = p.drop(1).take(8).map { it.toLongOrNull() ?: 0L }
@@ -72,15 +93,15 @@ class ProcParser(private val pageSize: Long, private val clkTck: Long) {
             return (busy * 100f / total).coerceIn(0f, 100f)
         }
 
-        val freq = coreValues(sec['F'])
-        if (maxFreq.isEmpty()) maxFreq.putAll(coreValues(sec['X']))
+        val freq = coreValues(freqLines)
+        if (maxFreq.isEmpty()) maxFreq.putAll(coreValues(maxLines))
         val cores = (0..maxCore).map { CoreInfo(usage("cpu$it"), freq[it] ?: 0L, maxFreq[it] ?: 0L) }
         val cpuTotal = usage("cpu")
         prevCpu = cpuNow
 
         // Память
         val mi = HashMap<String, Long>()
-        for (l in sec['M'].orEmpty()) {
+        for (l in mem) {
             val v = l.substringAfter(':').trim().substringBefore(' ').toLongOrNull() ?: continue
             mi[l.substringBefore(':')] = v * 1024
         }
@@ -88,20 +109,18 @@ class ProcParser(private val pageSize: Long, private val clkTck: Long) {
         val memAvail = mi["MemAvailable"] ?: memFallback[1]
         val memFree = mi["MemFree"] ?: memAvail
 
-        val loadLine = sec['L']?.firstOrNull()
-        // 4-е поле loadavg — «выполняются/всего»; вычитаем 1 — это наш собственный cat
+        // 4-е поле loadavg — «выполняются/всего»; вычитаем 1 — это наш собственный grep
         val runningTasks = loadLine?.split(' ')?.getOrNull(3)?.substringBefore('/')?.toIntOrNull()
             ?.let { (it - 1).coerceAtLeast(0) } ?: -1
         val load = loadLine?.split(' ')?.take(3)?.mapNotNull { it.toFloatOrNull() }
             ?.takeIf { it.size == 3 }?.toFloatArray()
 
-        // Температура
-        sec['Z']?.let { pickZones(it) }
-        val (gpuT, cpuT) = sec['T'].orEmpty().partition { it.substringBefore(':') in gpuThermal }
+        // Температура: при первом замере выбираем датчики по их типу
+        if (thermal == null) pickZones(zoneLines)
+        val (gpuT, cpuT) = tempLines.partition { it.substringBefore(':') in gpuThermal }
         val cpuTemp = maxTemp(cpuT)
 
         // GPU: при первом замере запоминаем, какие файлы читаются, дальше спрашиваем только их
-        val gpuLines = sec['G'].orEmpty()
         if (gpuPaths == null) gpuPaths = gpuLines.map { it.substringBefore(':') }.distinct()
         val gpu = Gpu.parse(gpuLines, maxTemp(gpuT))
 
@@ -109,7 +128,7 @@ class ProcParser(private val pageSize: Long, private val clkTck: Long) {
         val dt = if (prevUptime >= 0) uptime - prevUptime else 0.0
         val procNow = HashMap<Int, LongArray>()
         val procs = ArrayList<ProcInfo>()
-        for (l in sec['P'].orEmpty()) {
+        for (l in procLines) {
             val p = parseStat(l) ?: continue
             procNow[p.pid] = longArrayOf(p.startTicks, p.cpuTicks)
             val old = prevProc[p.pid]
@@ -168,9 +187,9 @@ class ProcParser(private val pageSize: Long, private val clkTck: Long) {
         gpuPaths = null     // с другим доступом могут открыться другие файлы
     }
 
-    private fun coreValues(lines: List<String>?): Map<Int, Long> {
+    private fun coreValues(lines: List<String>): Map<Int, Long> {
         val m = HashMap<Int, Long>()
-        for (l in lines.orEmpty()) {
+        for (l in lines) {
             val core = CORE_RE.find(l)?.groupValues?.get(1)?.toIntOrNull() ?: continue
             val v = l.substringAfterLast(':').trim().toLongOrNull() ?: continue
             m[core] = v
@@ -215,27 +234,56 @@ class ProcParser(private val pageSize: Long, private val clkTck: Long) {
         return picked.map { it.first }.take(16)
     }
 
+    /** «/proc/123/stat:…» — строка процесса (путь до двоеточия [c]). */
+    private fun isProcStat(l: String, c: Int): Boolean {
+        if (c < 12 || !l.startsWith("/proc/") || !l.regionMatches(c - 5, "/stat", 0, 5)) return false
+        for (i in 6 until c - 5) if (l[i] !in '0'..'9') return false
+        return true
+    }
+
+    /**
+     * Разбор «/proc/PID/stat:PID (имя) S …» без split: идём по полям прямо в строке,
+     * иначе на каждый процесс создавалось бы полсотни временных строк.
+     */
     private fun parseStat(line: String): ProcInfo? {
-        val lp = line.indexOf('(')
+        val start = line.indexOf(':') + 1
+        val lp = line.indexOf('(', start)
         val rp = line.lastIndexOf(')')
-        if (lp < 0 || rp < lp || rp + 2 >= line.length) return null
-        val pid = line.substring(0, lp).trim().toIntOrNull() ?: return null
-        val f = line.substring(rp + 2).split(' ')
-        if (f.size < 22) return null
-        fun n(i: Int) = f[i].toLongOrNull() ?: 0L
-        // f[0] — поле 3 (state), значит поле N лежит в f[N - 3]
+        if (lp < 0 || rp < lp || rp + 3 >= line.length) return null
+        var pid = 0
+        for (i in start until lp) {
+            val ch = line[i]
+            if (ch in '0'..'9') pid = pid * 10 + (ch - '0') else if (ch != ' ') return null
+        }
+        // f[0] — поле 3 (state), значит поле N лежит в f[N - 3]; нужны поля до 24-го
+        val f = LongArray(22)
+        var i = rp + 4          // после «) S »
+        var k = 1
+        while (k < 22 && i < line.length) {
+            var neg = false
+            var v = 0L
+            if (line[i] == '-') { neg = true; i++ }
+            while (i < line.length && line[i] != ' ') {
+                val ch = line[i]
+                if (ch in '0'..'9') v = v * 10 + (ch - '0')
+                i++
+            }
+            f[k++] = if (neg) -v else v
+            i++
+        }
+        if (k < 22) return null
         return ProcInfo(
             pid = pid,
-            ppid = n(1).toInt(),
+            ppid = f[1].toInt(),
             comm = line.substring(lp + 1, rp),
-            state = f[0].firstOrNull() ?: '?',
-            cpuTicks = n(11) + n(12),
-            prio = n(15).toInt(),
-            nice = n(16).toInt(),
-            threads = n(17).toInt(),
-            startTicks = n(19),
-            vsize = n(20),
-            rss = n(21) * pageSize,
+            state = line[rp + 2],
+            cpuTicks = f[11] + f[12],
+            prio = f[15].toInt(),
+            nice = f[16].toInt(),
+            threads = f[17].toInt(),
+            startTicks = f[19],
+            vsize = f[20],
+            rss = f[21] * pageSize,
         )
     }
 

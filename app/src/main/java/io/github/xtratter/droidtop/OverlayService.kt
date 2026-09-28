@@ -6,8 +6,10 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.graphics.PixelFormat
 import android.os.Build
@@ -27,6 +29,15 @@ class OverlayService : Service(), Sampler.Listener {
     private lateinit var prefs: Prefs
 
     override fun onBind(intent: Intent?): IBinder? = null
+
+    // оверлей нужен только на включённом экране — при выключенном опрос полностью останавливаем
+    override val needsAllProcs get() = false
+    private val screen = object : BroadcastReceiver() {
+        override fun onReceive(c: Context, i: Intent) {
+            if (i.action == Intent.ACTION_SCREEN_OFF) Sampler.remove(this@OverlayService)
+            else Sampler.add(this@OverlayService)
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -53,6 +64,9 @@ class OverlayService : Service(), Sampler.Listener {
         instance = this
         Sampler.init(this)
         Sampler.add(this)
+        registerReceiver(screen, IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_OFF); addAction(Intent.ACTION_SCREEN_ON)
+        })
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -63,6 +77,7 @@ class OverlayService : Service(), Sampler.Listener {
     override fun onDestroy() {
         if (instance === this) {
             instance = null
+            unregisterReceiver(screen)
             Sampler.remove(this)
             wm.removeView(view)
         }

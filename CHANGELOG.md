@@ -2,6 +2,11 @@
 
 [Русский](CHANGELOG.ru.md) · **English**
 
+## 1.7 — 2026-09-28
+
+- **Themes** (⋮ → Settings → Theme): standard (as before), follow system (standard or light with Android's dark mode), AMOLED black, light, graphite and classic htop
+- **Flexible overlay settings**: choose what it shows (CPU load, temperature, cores, RAM, GPU, battery), size 70–150 %, width (narrow / normal / wide), up to 10 top processes sorted by CPU or by memory, and "Lock position" so it can't be dragged by accident
+
 ## 1.6.2 — 2026-09-28
 
 - The "last N min" label above charts no longer jumps (for example to "6 min") after the screen was off or the app was in the background: pauses and quick extra updates are not counted in the time scale

@@ -12,9 +12,9 @@ class ChipsView(ctx: Context, attrs: AttributeSet? = null) : View(ctx, attrs) {
     private fun dp(v: Float) = Ui.dp(context, v)
     private val labelP = Ui.textPaint(ctx, 12f, Ui.regular, Ui.TEXT2)
     private val valueP = Ui.textPaint(ctx, 13f, Ui.medium)
-    private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x17FFFFFF }
+    private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Ui.ink(0x17) }
     private val edge = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE; strokeWidth = dp(1f); color = 0x2EFFFFFF
+        style = Paint.Style.STROKE; strokeWidth = dp(1f); color = Ui.ink(0x2E)
     }
     private val r = RectF()
     private val chipH = dp(34f)

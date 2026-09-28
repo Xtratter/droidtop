@@ -1,0 +1,2 @@
+- Themes: standard, follow system, AMOLED black, light, graphite, classic htop
+- Overlay settings: what to show, size, width, top processes by CPU or memory, lock position

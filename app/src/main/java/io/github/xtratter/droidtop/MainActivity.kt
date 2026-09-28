@@ -75,10 +75,13 @@ class MainActivity : Activity(), Sampler.Listener {
     private fun dp(v: Float) = Ui.dp(this, v).toInt()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        Ui.init(this)
-        Sampler.init(this)
         prefs = Prefs(this)
+        // тема может смениться и без нас: «как в системе» при переключении тёмного режима
+        if (!Ui.isCurrent(this, prefs.theme())) Ui.apply(this, prefs.theme())
+        setTheme(if (Ui.light) R.style.AppTheme_Light else R.style.AppTheme)
+        super.onCreate(savedInstanceState)
+        Ui.forgetDialogs()
+        Sampler.init(this)
         setupWindow()
         setContentView(R.layout.activity_main)
         table = Table(this).apply { cmdTitle = getString(R.string.col_command) }
@@ -90,7 +93,7 @@ class MainActivity : Activity(), Sampler.Listener {
         btnOverlay = findViewById(R.id.btnOverlay)
         searchBox = findViewById(R.id.searchBox)
         searchField = findViewById(R.id.searchField)
-        val barFill = Ui.withAlpha(Ui.mix(Ui.base, 0xFF23262E.toInt(), 0.6f), 0.9f)
+        val barFill = Ui.withAlpha(Ui.mix(Ui.base, Ui.surface, 0.6f), 0.9f)
         findViewById<View>(R.id.bar).background = GlassDrawable(this, 32f, barFill)
         searchBox.background = GlassDrawable(this, 26f, barFill)
         topScrim = findViewById(R.id.topScrim)
@@ -98,6 +101,7 @@ class MainActivity : Activity(), Sampler.Listener {
             android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
             intArrayOf(Ui.withAlpha(Ui.base, 0.94f), Ui.withAlpha(Ui.base, 0.7f), Ui.withAlpha(Ui.base, 0f)))
 
+        applyThemeToViews()
         setupTopBar()
         buildHeader()
         setupInsets()
@@ -121,14 +125,39 @@ class MainActivity : Activity(), Sampler.Listener {
     /** Рисуем под системными панелями (edge-to-edge) — на любой версии Android одинаково. */
     @Suppress("DEPRECATION")
     private fun setupWindow() {
-        window.setBackgroundDrawable(AuroraDrawable())
+        window.setBackgroundDrawable(if (Ui.aurora) AuroraDrawable() else android.graphics.drawable.ColorDrawable(Ui.base))
         if (Build.VERSION.SDK_INT >= 30) window.setDecorFitsSystemWindows(false)
         else window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
-            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+            (if (Ui.light) View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR else 0)
         if (Build.VERSION.SDK_INT >= 29) {
             window.isNavigationBarContrastEnforced = false
             window.isStatusBarContrastEnforced = false
         }
+    }
+
+    /** Цвета из разметки — под текущую тему; в светлой теме значки строки состояния тёмные. */
+    private fun applyThemeToViews() {
+        if (Build.VERSION.SDK_INT >= 30) {
+            val light = android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or
+                android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
+            window.insetsController?.setSystemBarsAppearance(if (Ui.light) light else 0, light)
+        }
+        val tint = android.content.res.ColorStateList.valueOf(Ui.TEXT)
+        for (id in intArrayOf(R.id.btnSearch, R.id.btnPause, R.id.btnOverlay, R.id.btnMore, R.id.btnSearchClose))
+            findViewById<ImageButton>(id).imageTintList = tint
+        findViewById<android.widget.ImageView>(R.id.searchIcon).imageTintList = tint
+        findViewById<TextView>(R.id.title).setTextColor(Ui.TEXT)
+        searchField.setTextColor(Ui.TEXT)
+        searchField.setHintTextColor(Ui.TEXT3)
+    }
+
+    /** Сменить тему: пересоздаём экран и оверлей с новыми цветами. */
+    fun changeTheme(t: Theme) {
+        prefs.theme = t.name
+        Ui.apply(this, t)
+        OverlayService.instance?.rebuild()
+        recreate()
     }
 
     @Suppress("DEPRECATION")
@@ -205,9 +234,9 @@ class MainActivity : Activity(), Sampler.Listener {
             return v
         }
         hint = add(TextView(this).apply {
-            background = GlassDrawable(this@MainActivity, 24f, 0x33FFC857)
+            background = GlassDrawable(this@MainActivity, 24f, Ui.hintFill)
             setPadding(dp(18f), dp(14f), dp(18f), dp(14f))
-            setTextColor(0xFFFFE6A8.toInt())
+            setTextColor(Ui.hintText)
             textSize = 13.5f
             setLineSpacing(0f, 1.15f)
             foreground = Ui.ripple(this@MainActivity, 24f)

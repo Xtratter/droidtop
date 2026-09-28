@@ -37,12 +37,12 @@ class Chart(private val view: View) {
         strokeJoin = Paint.Join.ROUND; strokeCap = Paint.Cap.ROUND
     }
     private val area = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val grid = Paint().apply { color = 0x1FFFFFFF; strokeWidth = 1f }
-    private val cross = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x80FFFFFF.toInt(); strokeWidth = dp(1f) }
+    private val grid = Paint().apply { color = Ui.ink(0x1F); strokeWidth = 1f }
+    private val cross = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Ui.ink(0x80); strokeWidth = dp(1f) }
     private val dot = Paint(Paint.ANTI_ALIAS_FLAG)
     private val axisP = Ui.textPaint(ctx, 10f, Ui.regular, Ui.TEXT3)
     private val tipP = Ui.textPaint(ctx, 12f, Ui.medium, Ui.TEXT)
-    private val tipBg = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xF0262930.toInt() }
+    private val tipBg = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Ui.withAlpha(Ui.surface, 0.94f) }
     private val tipRect = RectF()
     private val path = Path()
     private val fill = Path()

@@ -19,14 +19,14 @@ class ProcItemView(ctx: Context) : View(ctx) {
     private val letterP = Ui.textPaint(ctx, 17f, Ui.medium).apply { textAlign = Paint.Align.CENTER }
     private val p = Paint(Paint.ANTI_ALIAS_FLAG)
     private val r = RectF()
-    private val glass = GlassDrawable(ctx, 20f, 0x12FFFFFF)
+    private val glass = GlassDrawable(ctx, 20f, if (Ui.light) 0x99FFFFFF.toInt() else 0x12FFFFFF)
     private val side = dp(12f)
     private val vgap = dp(3f)
     private val iconSize = dp(40f)
     private val ownPid = android.os.Process.myPid()
     private val step = dp(18f)
     private val lineP = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = 0x59FFFFFF; strokeWidth = dp(1.5f); strokeCap = Paint.Cap.ROUND
+        color = Ui.ink(0x59); strokeWidth = dp(1.5f); strokeCap = Paint.Cap.ROUND
     }
     private val badgeP = Ui.textPaint(ctx, 11f, Ui.bold).apply { textAlign = Paint.Align.CENTER }
     private var glassLeft = -1
@@ -80,7 +80,7 @@ class ProcItemView(ctx: Context) : View(ctx) {
             c.drawBitmap(icon, ix, cy - iconSize / 2, null)
         } else {
             val hue = ((pr.name.hashCode() and 0x7fffffff) % 360).toFloat()
-            p.color = if (pr.kernel) 0x22FFFFFF else android.graphics.Color.HSVToColor(floatArrayOf(hue, 0.35f, 0.42f))
+            p.color = if (pr.kernel) Ui.ink(0x22) else android.graphics.Color.HSVToColor(floatArrayOf(hue, 0.35f, 0.42f))
             c.drawCircle(ix + iconSize / 2, cy, iconSize / 2, p)
             letterP.color = if (pr.kernel) Ui.TEXT3 else Ui.TEXT
             val ch = pr.title.trimStart('[', '/', '.', '@').firstOrNull()?.uppercaseChar()?.toString() ?: "?"
@@ -103,7 +103,7 @@ class ProcItemView(ctx: Context) : View(ctx) {
             p.color = Ui.base
             c.drawRoundRect(r, dp(9f), dp(9f), p)
             r.inset(dp(1.5f), dp(1.5f))
-            p.color = if (rw.collapsed) Ui.tertiary else 0xFF3A3D46.toInt()
+            p.color = if (rw.collapsed) Ui.tertiary else Ui.mix(Ui.base, Ui.TEXT, 0.22f)
             c.drawRoundRect(r, dp(8f), dp(8f), p)
             badgeP.color = if (rw.collapsed) Ui.ON_ACCENT else Ui.TEXT
             c.drawText(text, r.centerX(), r.centerY() - (badgeP.ascent() + badgeP.descent()) / 2, badgeP)

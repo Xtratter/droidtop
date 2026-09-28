@@ -34,7 +34,7 @@ object ProcessDialog {
             textSize = 20f
             typeface = Ui.medium
             setTextColor(Ui.TEXT)
-            background = Ui.pill(a, 0x2EFFFFFF)
+            background = Ui.pill(a, Ui.ink(0x2E))
         }, LinearLayout.LayoutParams(px(48f), px(48f)))
         head.addView(LinearLayout(a).apply {
             orientation = LinearLayout.VERTICAL
@@ -126,7 +126,7 @@ object ProcessDialog {
             addView(if (ic != null) ImageView(a).apply { setImageBitmap(ic) } else TextView(a).apply {
                 text = q.title.trimStart('[', '/', '.', '@').take(1).uppercase()
                 gravity = Gravity.CENTER; textSize = 13f; typeface = Ui.medium; setTextColor(Ui.TEXT)
-                background = Ui.pill(a, 0x2EFFFFFF)
+                background = Ui.pill(a, Ui.ink(0x2E))
             }, LinearLayout.LayoutParams(px(30f), px(30f)))
             addView(LinearLayout(a).apply {
                 orientation = LinearLayout.VERTICAL

@@ -1,4 +1,6 @@
 <resources>
     <color name="bg">#FF000000</color>
     <color name="accent">#FFA8C7FA</color>
+    <color name="bg_light">#FFF1F3F9</color>
+    <color name="accent_light">#FF3B5BA9</color>
 </resources>

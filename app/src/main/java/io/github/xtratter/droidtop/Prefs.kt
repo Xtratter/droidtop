@@ -28,12 +28,21 @@ class Prefs(ctx: Context) {
     var sort by str("sort", Sort.CPU.name)
     var sortAsc by bool("sort_asc", false)
 
+    var theme by str("theme", Theme.STANDARD.name)
+    fun theme(): Theme = runCatching { Theme.valueOf(theme) }.getOrDefault(Theme.STANDARD)
+
     var tableMode by bool("table_mode", false)
     var treeMode by bool("tree_mode", false)
 
     var overlayTop by int("overlay_top", 3)
     var overlayAlpha by int("overlay_alpha", 85)
     var overlayClickThrough by bool("overlay_click_through", false)
+    /** Части оверлея — биты [OverlayView.Part]. */
+    var overlayParts by int("overlay_parts", OverlayView.Part.ALL)
+    var overlayScale by int("overlay_scale", 100)
+    var overlayWidth by int("overlay_width", 184)
+    var overlayTopMem by bool("overlay_top_mem", false)
+    var overlayLock by bool("overlay_lock", false)
     var overlayX by int("overlay_x", 0)
     var overlayY by int("overlay_y", 160)
 

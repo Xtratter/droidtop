@@ -14,7 +14,7 @@ class SortBar(ctx: Context, attrs: AttributeSet? = null) : View(ctx, attrs) {
     private fun dp(v: Float) = Ui.dp(context, v)
     private val textP = Ui.textPaint(ctx, 13f, Ui.medium)
     private val p = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val edge = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = dp(1f); color = 0x33FFFFFF }
+    private val edge = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = dp(1f); color = Ui.ink(0x33) }
     private val r = RectF()
     private val h = dp(36f)
     private val gap = dp(8f)
@@ -56,7 +56,7 @@ class SortBar(ctx: Context, attrs: AttributeSet? = null) : View(ctx, attrs) {
                 p.color = if (i == 0) Ui.tertiary else Ui.primary
                 c.drawRoundRect(r, h / 2, h / 2, p)
             } else {
-                p.color = 0x12FFFFFF
+                p.color = Ui.ink(0x12)
                 c.drawRoundRect(r, h / 2, h / 2, p)
                 r.inset(dp(0.5f), dp(0.5f))
                 c.drawRoundRect(r, h / 2, h / 2, edge)

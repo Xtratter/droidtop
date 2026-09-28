@@ -22,6 +22,7 @@ Ready-made APKs are on the [Releases](https://github.com/Xtratter/droidtop/relea
 
 - **Material 3 "liquid glass" design**: translucent cards on a soft colored background, colors follow
   the wallpaper (Android 12+), smooth animations. If you prefer the classic look, there is an htop table mode
+- **Themes**: standard, follow system, AMOLED black, light, graphite and classic htop (⋮ → Settings → Theme)
 - **Pinch to zoom in the htop table**: spread or pinch two fingers to make the table and meters text bigger
   or smaller (the size is remembered and can also be picked in the settings)
 - **htop-style meters**: load and frequency of every core, memory, swap (zram), tasks,
@@ -38,7 +39,9 @@ Ready-made APKs are on the [Releases](https://github.com/Xtratter/droidtop/relea
 - **Tap a process** for details (command line, peak memory, swap, `oom_score_adj`) and actions:
   SIGTERM, SIGKILL, SIGSTOP/SIGCONT, force stop, open "App info"
 - **Floating overlay** (⋮ → "Floating overlay"): CPU, core bars, memory, GPU and the top processes.
-  Drag it with a finger, tap it to open DroidTop, close it from the notification
+  Drag it with a finger, tap it to open DroidTop, close it from the notification.
+  In the settings you choose what it shows, its size and width, the number of top processes and whether they are
+  sorted by CPU or memory, background opacity, and you can lock it in place
 
 ## Access modes: normal, Shizuku, root
 

@@ -85,6 +85,7 @@
             android:visibility="gone">
 
             <ImageView
+                android:id="@+id/searchIcon"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:alpha="0.7"

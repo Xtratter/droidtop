@@ -94,7 +94,7 @@ class MemCard(ctx: Context, attrs: AttributeSet? = null) : View(ctx, attrs) {
         var x = pad
         x = legend(c, x, y, Ui.primary, ctx.getString(R.string.c_used))
         x = legend(c, x, y, Ui.withAlpha(Ui.secondary, 0.6f), ctx.getString(R.string.c_cache, Human.size(ctx, (snap.memAvail - snap.memFree).coerceAtLeast(0))))
-        legend(c, x, y, Ui.TRACK or 0x30000000, ctx.getString(R.string.c_free, Human.size(ctx, snap.memFree)))
+        legend(c, x, y, Ui.ink(0x4A), ctx.getString(R.string.c_free, Human.size(ctx, snap.memFree)))
 
         // история занятой памяти
         chart.rect.set(pad, y + dp(26f), width - pad, y + dp(26f) + chartH)

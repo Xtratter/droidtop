@@ -46,7 +46,7 @@ class OverlayService : Service(), Sampler.Listener {
         if (!Settings.canDrawOverlays(this)) { stopSelf(); return }
         wm = getSystemService(WindowManager::class.java)
         Ui.init(this)
-        view = OverlayView(this)
+        view = newView()
         lp = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -58,7 +58,6 @@ class OverlayService : Service(), Sampler.Listener {
             x = prefs.overlayX
             y = prefs.overlayY
         }
-        setupTouch()
         applyPrefs()
         wm.addView(view, lp)
         instance = this
@@ -88,8 +87,39 @@ class OverlayService : Service(), Sampler.Listener {
         view.snapshot = s
     }
 
+    private var builtScale = 0
+    private var builtWidth = 0
+
+    private fun newView(): OverlayView {
+        builtScale = prefs.overlayScale
+        builtWidth = prefs.overlayWidth
+        return OverlayView(this, builtScale / 100f, builtWidth).also { v ->
+            setupTouch(v)
+            Sampler.last?.let { v.snapshot = it }
+        }
+    }
+
+    /** Создать плашку заново — после смены темы, размера или ширины. */
+    fun rebuild() {
+        if (!::view.isInitialized) return
+        val old = view
+        view = newView()
+        applyPrefs()
+        if (old.isAttachedToWindow) { wm.removeView(old); wm.addView(view, lp) }
+    }
+
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // тема «как в системе»: переключили тёмный режим — перекрашиваемся
+        val t = prefs.theme()
+        if (!Ui.isCurrent(this, t)) { Ui.apply(this, t); rebuild() }
+    }
+
     /** Применить настройки оверлея (вызывается и после их изменения). */
     fun applyPrefs() {
+        if (prefs.overlayScale != builtScale || prefs.overlayWidth != builtWidth) return rebuild()
+        view.parts = prefs.overlayParts
+        view.topByMem = prefs.overlayTopMem
         view.topCount = prefs.overlayTop
         view.kernelThreads = prefs.kernelThreads
         val through = prefs.overlayClickThrough
@@ -103,7 +133,7 @@ class OverlayService : Service(), Sampler.Listener {
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private fun setupTouch() {
+    private fun setupTouch(view: OverlayView) {
         val slop = ViewConfiguration.get(this).scaledTouchSlop
         var downX = 0f; var downY = 0f; var startX = 0; var startY = 0; var dragging = false
         view.setOnTouchListener { _, e ->
@@ -114,7 +144,7 @@ class OverlayService : Service(), Sampler.Listener {
                 MotionEvent.ACTION_MOVE -> {
                     val dx = e.rawX - downX
                     val dy = e.rawY - downY
-                    if (!dragging && (abs(dx) > slop || abs(dy) > slop)) dragging = true
+                    if (!dragging && !prefs.overlayLock && (abs(dx) > slop || abs(dy) > slop)) dragging = true
                     if (dragging) {
                         lp.x = (startX + dx).toInt().coerceAtLeast(0)
                         lp.y = (startY + dy).toInt().coerceAtLeast(0)
@@ -122,7 +152,9 @@ class OverlayService : Service(), Sampler.Listener {
                     }
                 }
                 MotionEvent.ACTION_UP -> {
-                    if (dragging) {
+                    if (!dragging && (abs(e.rawX - downX) > slop || abs(e.rawY - downY) > slop)) {
+                        // закреплённый оверлей: провели пальцем — не открываем приложение
+                    } else if (dragging) {
                         prefs.overlayX = lp.x; prefs.overlayY = lp.y
                     } else {
                         startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))

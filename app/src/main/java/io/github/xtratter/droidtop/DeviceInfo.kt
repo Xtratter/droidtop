@@ -304,13 +304,28 @@ object DeviceInfo {
 
         out += Section(s(R.string.dev_s_sensors)).apply {
             val list = ctx.getSystemService(SensorManager::class.java).getSensorList(Sensor.TYPE_ALL)
-            for (sn in list) add(sn.name, sn.vendor)
+            for ((name, vendor) in sensors(list.map { it.name to it.vendor })) add(name, vendor)
         }
 
         if (raw.thermal.isNotEmpty()) out += Section(s(R.string.dev_s_thermal)).apply {
             for ((name, t) in raw.thermal) add(name, String.format(Locale.getDefault(), "%.1f°C", t))
         }
         return out.filter { it.rows.isNotEmpty() }
+    }
+
+    /**
+     * Android отдаёт многие датчики дважды — «pedometer Wakeup» и «pedometer Non-wakeup», а то и по
+     * нескольку штук: склеиваем их по названию без этого хвоста и производителю, добавляя «× N».
+     */
+    fun sensors(list: List<Pair<String, String>>): List<Pair<String, String>> {
+        val suffix = Regex("[\\s_-]*(non[\\s_-]?wake[\\s_-]?up|wake[\\s_-]?up)$", RegexOption.IGNORE_CASE)
+        val groups = LinkedHashMap<Pair<String, String>, Int>()
+        for ((name, vendor) in list) {
+            val base = name.trim().replace(suffix, "").ifEmpty { name.trim() }
+            val key = base to vendor.trim()
+            groups[key] = (groups[key] ?: 0) + 1
+        }
+        return groups.map { (k, n) -> k.first to if (n > 1) "${k.second} × $n" else k.second }
     }
 
     /** «Linux version X (…) (… clang version 21.0.0 …) #4 SMP PREEMPT <дата>» → X и «clang 21.0.0 · дата». */

@@ -2,6 +2,10 @@
 
 [Русский](CHANGELOG.ru.md) · **English**
 
+## 1.9.2 — 2026-09-28
+
+- Device info: sensors that Android lists twice — "Wakeup" and "Non-wakeup" variants, or several of the same kind — are merged into one line with a count (`pedometer · qualcomm × 4`); the section is about half as long
+
 ## 1.9.1 — 2026-09-28
 
 - The CPU card no longer hides under the top bar and status bar when the app starts: the space for the bar now belongs to the list header instead of the list padding, which ListView kept stale while the bar size arrived

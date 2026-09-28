@@ -1,0 +1,1 @@
+- Wakeup/Non-wakeup sensors merged into one line

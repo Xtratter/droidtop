@@ -81,4 +81,20 @@ class DeviceInfoTest {
         assertEquals("clang 21.0.0 · Wed Feb 4 19:50:32 CET 2026", build)
         assertEquals(null to null, DeviceInfo.kernel(""))
     }
+
+    @Test
+    fun mergesWakeupSensors() {
+        val merged = DeviceInfo.sensors(listOf(
+            "pedometer  Wakeup" to "qualcomm", "pedometer  Non-wakeup" to "qualcomm",
+            "pedometer  Wakeup" to "qualcomm", "pedometer  Non-wakeup" to "qualcomm",
+            "stationary_detect_wakeup" to "qualcomm", "stationary_detect" to "qualcomm",
+            "tcs3701 Ambient Light Sensor Wakeup" to "ams AG", "tcs3701 Ambient Light Sensor Non-wakeup" to "ams AG",
+            "Touch Sensor" to "xiaomi", "orientation  Non-wakeup" to "xiaomi"))
+        assertEquals(listOf(
+            "pedometer" to "qualcomm × 4",
+            "stationary_detect" to "qualcomm × 2",
+            "tcs3701 Ambient Light Sensor" to "ams AG × 2",
+            "Touch Sensor" to "xiaomi",
+            "orientation" to "xiaomi"), merged)
+    }
 }

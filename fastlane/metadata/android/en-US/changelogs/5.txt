@@ -1,0 +1,1 @@
+GPU card: load, frequency, model and temperature (Adreno and Mali), with a history chart; GPU line in the htop table and the overlay.

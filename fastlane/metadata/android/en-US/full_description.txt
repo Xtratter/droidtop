@@ -9,6 +9,7 @@ DroidTop shows what is running on your phone and how much it costs — inspired 
 <li>Process details: command line, peak memory, swap usage, oom_score_adj</li>
 <li>Actions: SIGTERM, SIGKILL, SIGSTOP/SIGCONT, force stop an app, open app info</li>
 <li>History charts of CPU, memory and battery power, plus CPU and memory of each process</li>
+<li>GPU: load, frequency, model and temperature for Adreno and Mali (usually needs root)</li>
 <li>Battery: power in watts, current, voltage, time left or time to full</li>
 <li>Floating overlay above other apps: CPU, per-core bars, RAM and top processes; drag it anywhere, optionally let touches pass through</li>
 </ul>

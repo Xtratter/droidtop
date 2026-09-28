@@ -46,6 +46,8 @@ class Snapshot(
     val clkTck: Long,
     /** Сколько задач сейчас в очереди на CPU (из /proc/loadavg), -1 — неизвестно. */
     runningTasks: Int = -1,
+    /** Видеочип; null — данных нет (обычно без root). */
+    val gpu: Gpu? = null,
 ) {
     val root get() = access == Access.ROOT
     /** Видим все процессы и загрузку CPU (root или Shizuku). */

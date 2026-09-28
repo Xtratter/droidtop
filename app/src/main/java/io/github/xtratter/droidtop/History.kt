@@ -27,6 +27,7 @@ object History {
     val cpu = Series()
     val mem = Series()
     val power = Series()
+    val gpu = Series()
     /** Сколько секунд в среднем между точками — для подписи «за N мин». */
     var secondsPerPoint = 2f; private set
     private var lastUptime = -1.0
@@ -55,6 +56,7 @@ object History {
         })
         mem.add(if (s.memTotal > 0) (s.memTotal - s.memAvail) * 100f / s.memTotal else 0f)
         power.add(s.battery?.powerW ?: 0f)
+        gpu.add((s.gpu?.fraction ?: 0f) * 100f)
 
         val next = HashMap<Long, Proc>(s.procs.size * 2)
         for (p in s.procs) {

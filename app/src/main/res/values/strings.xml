@@ -145,4 +145,9 @@
     <string name="shizuku_open">Open Shizuku</string>
     <string name="shizuku_get">Get Shizuku</string>
     <string name="shizuku_failed">Could not start via Shizuku — working without it</string>
+    <string name="c_gpu">Graphics (GPU)</string>
+    <string name="c_gpu_model">GPU · %1$s</string>
+    <string name="c_gpu_freq">%1$d / %2$d MHz</string>
+    <string name="c_gpu_freq_only">Frequency relative to max · load needs root</string>
+    <string name="u_mhz">MHz</string>
 </resources>

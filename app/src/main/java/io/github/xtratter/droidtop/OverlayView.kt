@@ -30,7 +30,7 @@ class OverlayView(ctx: Context) : View(ctx) {
     var snapshot: Snapshot? = null
         set(v) {
             val rows = v?.let { top(it).size }
-            val relayout = field?.let { top(it).size } != rows
+            val relayout = field?.let { top(it).size } != rows || (field?.gpu == null) != (v?.gpu == null)
             field = v
             if (v != null) {
                 val f = FloatArray(v.cores.size + 2)
@@ -62,6 +62,7 @@ class OverlayView(ctx: Context) : View(ctx) {
         val n = snapshot?.let { top(it).size } ?: 0
         var h = pad * 2 + dp(14f) + dp(32f) + dp(8f) + coresH + dp(12f) + dp(14f) + dp(10f)
         if (snapshot?.battery?.currentMa?.let { it > 0f } == true) h += dp(20f)
+        if (snapshot?.gpu != null) h += dp(34f)
         if (n > 0) h += dp(8f) + n * dp(20f)
         setMeasuredDimension(w.toInt(), h.toInt())
     }
@@ -125,6 +126,26 @@ class OverlayView(ctx: Context) : View(ctx) {
         r.right = pad + (width - 2 * pad) * v[1].coerceIn(0f, 1f)
         p.color = Ui.load(v[1] * 100, 75f, 90f); c.drawRoundRect(r, bh / 2, bh / 2, p)
         y += bh + dp(8f)
+
+        // видеочип: загрузка (или частота) и полоска
+        val gp = s.gpu
+        if (gp != null) {
+            y += dp(4f) - labelP.ascent()
+            c.drawText("GPU", pad, y, labelP)
+            val parts = ArrayList<String>()
+            if (!gp.busy.isNaN()) parts += Fmt.pct(gp.busy) + "%"
+            if (gp.freqMHz > 0) parts += "${gp.freqMHz} " + context.getString(R.string.u_mhz)
+            if (!gp.temp.isNaN()) parts += Fmt.temp(gp.temp)
+            rightP.color = Ui.TEXT
+            c.drawText(parts.joinToString(" · "), width - pad, y, rightP)
+            y += dp(7f)
+            r.set(pad, y, width - pad, y + bh)
+            p.color = Ui.TRACK; c.drawRoundRect(r, bh / 2, bh / 2, p)
+            r.right = pad + (width - 2 * pad) * gp.fraction.coerceIn(0f, 1f)
+            p.color = if (!gp.busy.isNaN()) Ui.load(gp.busy, 50f, 85f) else Ui.secondary
+            c.drawRoundRect(r, bh / 2, bh / 2, p)
+            y += bh + dp(8f)
+        }
 
         // батарея: мощность и заряд
         val b = s.battery

@@ -144,4 +144,9 @@
     <string name="shizuku_open">Открыть Shizuku</string>
     <string name="shizuku_get">Скачать Shizuku</string>
     <string name="shizuku_failed">Не удалось запуститься через Shizuku — работаю без него</string>
+    <string name="c_gpu">Видеочип (GPU)</string>
+    <string name="c_gpu_model">GPU · %1$s</string>
+    <string name="c_gpu_freq">%1$d / %2$d МГц</string>
+    <string name="c_gpu_freq_only">Частота от максимальной · загрузка — только с root</string>
+    <string name="u_mhz">МГц</string>
 </resources>

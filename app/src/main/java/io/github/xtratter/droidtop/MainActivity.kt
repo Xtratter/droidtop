@@ -54,6 +54,7 @@ class MainActivity : Activity(), Sampler.Listener {
     private lateinit var cpuCard: CpuCard
     private lateinit var memCard: MemCard
     private lateinit var batteryCard: BatteryCard
+    private lateinit var gpuCard: GpuCard
     private lateinit var chips: ChipsView
     private lateinit var meters: MetersView
     private lateinit var procsTitle: TextView
@@ -212,6 +213,7 @@ class MainActivity : Activity(), Sampler.Listener {
         })
         cpuCard = add(CpuCard(this))
         memCard = add(MemCard(this))
+        gpuCard = add(GpuCard(this).apply { visibility = View.GONE })
         batteryCard = add(BatteryCard(this))
         chips = add(ChipsView(this), 18f)
         meters = add(MetersView(this, null).apply {
@@ -252,6 +254,7 @@ class MainActivity : Activity(), Sampler.Listener {
         cpuCard.visibility = if (t) View.GONE else View.VISIBLE
         memCard.visibility = cpuCard.visibility
         batteryCard.visibility = cpuCard.visibility
+        gpuCard.visibility = if (t || snapshot?.gpu == null) View.GONE else View.VISIBLE
         chips.visibility = cpuCard.visibility
         sortScroll.visibility = cpuCard.visibility
         meters.visibility = if (t) View.VISIBLE else View.GONE
@@ -315,7 +318,7 @@ class MainActivity : Activity(), Sampler.Listener {
         if (shownHint != hintRes) { shownHint = hintRes; hint.setText(hintRes) }
 
         if (prefs.tableMode) meters.snapshot = s
-        else { cpuCard.update(s); memCard.update(s); batteryCard.update(s); chips.update(s) }
+        else { cpuCard.update(s); memCard.update(s); gpuCard.update(s); batteryCard.update(s); chips.update(s) }
 
         val q = filter.trim().lowercase()
         val showKernel = prefs.kernelThreads

@@ -9,7 +9,9 @@ class ProcParser(private val pageSize: Long, private val clkTck: Long) {
     private var prevProc = HashMap<Int, LongArray>()        // pid → [время старта, тики CPU]
     private var prevUptime = -1.0
     private val names = HashMap<Int, Name>()                 // pid → имя и пользователь из ps
-    private var thermal: List<String>? = null               // файлы температуры CPU; null — ещё не искали
+    private var thermal: List<String>? = null               // файлы температуры CPU и GPU; null — ещё не искали
+    private var gpuThermal = emptySet<String>()             // какие из них — датчики GPU
+    private var gpuPaths: List<String>? = null              // файлы GPU, которые удалось прочитать; null — ещё не искали
     private val maxFreq = HashMap<Int, Long>()
     private var maxCore = Runtime.getRuntime().availableProcessors() - 1
 
@@ -29,6 +31,8 @@ class ProcParser(private val pageSize: Long, private val clkTck: Long) {
         val t = thermal
         if (t == null) append("echo @Z; grep -sH '' /sys/class/thermal/thermal_zone*/type\n")
         else if (t.isNotEmpty()) append("echo @T; grep -sH '' ${t.joinToString(" ")}\n")
+        val g = gpuPaths ?: Gpu.PATHS
+        if (g.isNotEmpty()) append("echo @G; grep -sH '' ${g.joinToString(" ")}\n")
         append("echo @P; cat /proc/[0-9]*/stat\n")
     }
 
@@ -92,12 +96,14 @@ class ProcParser(private val pageSize: Long, private val clkTck: Long) {
             ?.takeIf { it.size == 3 }?.toFloatArray()
 
         // Температура
-        sec['Z']?.let { thermal = pickCpuZones(it) }
-        val cpuTemp = sec['T'].orEmpty()
-            .mapNotNull { it.substringAfterLast(':').trim().toFloatOrNull() }
-            .map { if (it >= 1000f) it / 1000f else it }
-            .filter { it > 0f && it < 150f }
-            .maxOrNull() ?: Float.NaN
+        sec['Z']?.let { pickZones(it) }
+        val (gpuT, cpuT) = sec['T'].orEmpty().partition { it.substringBefore(':') in gpuThermal }
+        val cpuTemp = maxTemp(cpuT)
+
+        // GPU: при первом замере запоминаем, какие файлы читаются, дальше спрашиваем только их
+        val gpuLines = sec['G'].orEmpty()
+        if (gpuPaths == null) gpuPaths = gpuLines.map { it.substringBefore(':') }.distinct()
+        val gpu = Gpu.parse(gpuLines, maxTemp(gpuT))
 
         // Процессы
         val dt = if (prevUptime >= 0) uptime - prevUptime else 0.0
@@ -120,7 +126,7 @@ class ProcParser(private val pageSize: Long, private val clkTck: Long) {
             memTotal = memTotal, memAvail = memAvail, memFree = memFree,
             swapTotal = mi["SwapTotal"] ?: 0L, swapFree = mi["SwapFree"] ?: 0L,
             load = load, uptime = uptime, procs = procs,
-            cpuTemp = cpuTemp, clkTck = clkTck, runningTasks = runningTasks,
+            cpuTemp = cpuTemp, clkTck = clkTck, runningTasks = runningTasks, gpu = gpu,
         )
     }
 
@@ -159,6 +165,7 @@ class ProcParser(private val pageSize: Long, private val clkTck: Long) {
 
     fun reset() {
         prevCpu.clear(); prevProc.clear(); prevUptime = -1.0; names.clear()
+        gpuPaths = null     // с другим доступом могут открыться другие файлы
     }
 
     private fun coreValues(lines: List<String>?): Map<Int, Long> {
@@ -172,7 +179,29 @@ class ProcParser(private val pageSize: Long, private val clkTck: Long) {
         return m
     }
 
-    /** Из списка «путь/type:имя» выбрать датчики процессора. */
+    private fun maxTemp(lines: List<String>) = lines
+        .mapNotNull { it.substringAfterLast(':').trim().toFloatOrNull() }
+        .map { if (it >= 1000f) it / 1000f else it }
+        .filter { it > 0f && it < 150f }
+        .maxOrNull() ?: Float.NaN
+
+    /** Из списка «путь/type:имя» выбрать датчики процессора и видеочипа. */
+    private fun pickZones(lines: List<String>) {
+        val gpu = pickGpuZones(lines)
+        gpuThermal = gpu.toHashSet()
+        thermal = pickCpuZones(lines) + gpu
+    }
+
+    private fun pickGpuZones(lines: List<String>): List<String> {
+        val zones = lines.mapNotNull { l ->
+            val path = l.substringBefore(':')
+            val type = l.substringAfter(':').lowercase()
+            if (!path.endsWith("/type") || "gpu" !in type || type.endsWith("-step") || "cool" in type) null
+            else path.removeSuffix("/type") + "/temp" to type
+        }
+        return zones.filter { it.second.endsWith("usr") }.ifEmpty { zones }.map { it.first }.take(4)
+    }
+
     private fun pickCpuZones(lines: List<String>): List<String> {
         val zones = lines.mapNotNull { l ->
             val path = l.substringBefore(':')

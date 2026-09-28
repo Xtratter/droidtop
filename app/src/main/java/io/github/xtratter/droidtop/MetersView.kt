@@ -39,7 +39,7 @@ class MetersView(ctx: Context, attrs: AttributeSet?) : View(ctx, attrs) {
 
     private fun countLines(): Int {
         val s = snapshot ?: return 0
-        return (s.cores.size + 1) / 2 + 1 + (if (s.swapTotal > 0) 1 else 0) + 3
+        return (s.cores.size + 1) / 2 + 1 + (if (s.swapTotal > 0) 1 else 0) + (if (s.gpu != null) 1 else 0) + 3
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -78,6 +78,18 @@ class MetersView(ctx: Context, attrs: AttributeSet?) : View(ctx, attrs) {
             val su = s.swapTotal - s.swapFree
             drawBar(c, paddingLeft.toFloat(), y, totalChars, "Swp",
                 listOf(frac(su, s.swapTotal) to Palette.RED), Fmt.size(su) + "/" + Fmt.size(s.swapTotal))
+            y += lineH
+        }
+        s.gpu?.let { g ->
+            // загрузка GPU зелёным, а если её нет — частота синим, как у ядер без root
+            val color = if (!g.busy.isNaN()) Palette.load(g.busy, 50f, 85f).let { if (it == Palette.TEXT || it == Palette.DIM) Palette.GREEN else it }
+                else Palette.BLUE
+            val text = listOfNotNull(
+                if (!g.busy.isNaN()) Fmt.pct(g.busy) + "%" else null,
+                if (g.freqMHz > 0) "${g.freqMHz}M" else null,
+                if (!g.temp.isNaN()) Fmt.temp(g.temp) else null,
+            ).joinToString(" ")
+            drawBar(c, paddingLeft.toFloat(), y, totalChars, "GPU", listOf(g.fraction to color), text)
             y += lineH
         }
 

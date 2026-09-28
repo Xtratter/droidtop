@@ -11,8 +11,8 @@ android {
         applicationId = "io.github.xtratter.droidtop"
         minSdk = 26
         targetSdk = 35
-        versionCode = 16
-        versionName = "1.9.3"
+        versionCode = 17
+        versionName = "1.10"
     }
     buildTypes {
         release {

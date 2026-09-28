@@ -294,4 +294,5 @@
     <string name="sum_tasks">processes %1$d, threads %2$d</string>
     <string name="sum_top">Top %1$d by CPU (PID, CPU, RES, name):</string>
     <string name="dev_kernel_build">Kernel build</string>
+    <string name="th_toast">Theme: %1$s</string>
 </resources>

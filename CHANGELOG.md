@@ -2,6 +2,10 @@
 
 [Русский](CHANGELOG.ru.md) · **English**
 
+## 1.10 — 2026-09-28
+
+- **Quick theme switch**: tap the DroidTop title in the top bar to switch to the next theme (standard → system → AMOLED → light → graphite → classic htop → standard), long-press it to go back to the standard theme; a short hint shows the theme name
+
 ## 1.9.3 — 2026-09-28
 
 - Device info: temperature zones that Qualcomm lists in pairs for different governors (`cpu-1-5-usr` / `cpu-1-5-step`) are merged into one line with the higher value; battery voltage and current thresholds (`pm8150b-vbat-lvl0` and similar, shown as ~4 °C) are no longer listed as temperatures

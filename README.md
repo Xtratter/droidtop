@@ -22,7 +22,7 @@ Ready-made APKs are on the [Releases](https://github.com/Xtratter/droidtop/relea
 
 - **Material 3 "liquid glass" design**: translucent cards on a soft colored background, colors follow
   the wallpaper (Android 12+), smooth animations. If you prefer the classic look, there is an htop table mode (⋮ → Settings)
-- **Themes**: standard, follow system, AMOLED black, light, graphite and classic htop (⋮ → Settings → Theme)
+- **Themes**: standard, follow system, AMOLED black, light, graphite and classic htop (⋮ → Settings → Theme); tap the DroidTop title to switch to the next theme, long-press it to go back to the standard one
 - **Pinch to zoom in the htop table**: spread or pinch two fingers to make the table and meters text bigger
   or smaller (the size is remembered and can also be picked in the settings)
 - **htop-style meters**: load and frequency of every core, memory, swap (zram), tasks,

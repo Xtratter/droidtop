@@ -153,6 +153,11 @@ class MainActivity : Activity(), Sampler.Listener {
         searchField.setHintTextColor(Ui.TEXT3)
     }
 
+    private fun switchTheme(t: Theme) {
+        Toast.makeText(applicationContext, getString(R.string.th_toast, getString(t.title)), Toast.LENGTH_SHORT).show()
+        if (t != prefs.theme()) changeTheme(t)
+    }
+
     /** Сменить тему: пересоздаём экран и оверлей с новыми цветами. */
     fun changeTheme(t: Theme) {
         prefs.theme = t.name
@@ -196,6 +201,11 @@ class MainActivity : Activity(), Sampler.Listener {
     }
 
     private fun setupTopBar() {
+        // нажатие на название — следующая тема по кругу, удержание — тема по умолчанию
+        findViewById<TextView>(R.id.title).apply {
+            setOnClickListener { val all = Theme.entries; switchTheme(all[(prefs.theme().ordinal + 1) % all.size]) }
+            setOnLongClickListener { switchTheme(Theme.STANDARD); true }
+        }
         findViewById<View>(R.id.btnSearch).setOnClickListener { showSearch(searchBox.visibility != View.VISIBLE) }
         findViewById<View>(R.id.btnSearchClose).setOnClickListener { showSearch(false) }
         btnPause.setOnClickListener {

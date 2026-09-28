@@ -308,9 +308,26 @@ object DeviceInfo {
         }
 
         if (raw.thermal.isNotEmpty()) out += Section(s(R.string.dev_s_thermal)).apply {
-            for ((name, t) in raw.thermal) add(name, String.format(Locale.getDefault(), "%.1f°C", t))
+            for ((name, t) in thermals(raw.thermal)) add(name, String.format(Locale.getDefault(), "%.1f°C", t))
         }
         return out.filter { it.rows.isNotEmpty() }
+    }
+
+    /**
+     * Зоны Qualcomm заведены парами «cpu-1-5-usr» / «cpu-1-5-step» для разных регуляторов — это
+     * одна точка, склеиваем её с большим из значений; «pm8150b-vbat-lvl0» и подобные — пороги
+     * напряжения и тока батареи, а не температуры, их убираем.
+     */
+    fun thermals(list: List<Pair<String, Float>>): List<Pair<String, Float>> {
+        val notTemp = Regex("vbat|ibat|vph", RegexOption.IGNORE_CASE)
+        val suffix = Regex("-(usr|step)$")
+        val out = LinkedHashMap<String, Float>()
+        for ((name, t) in list) {
+            if (notTemp.containsMatchIn(name)) continue
+            val base = name.replace(suffix, "")
+            out[base] = maxOf(out[base] ?: t, t)
+        }
+        return out.toList().sortedByDescending { it.second }
     }
 
     /**

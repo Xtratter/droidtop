@@ -2,6 +2,10 @@
 
 [Русский](CHANGELOG.ru.md) · **English**
 
+## 1.9.3 — 2026-09-28
+
+- Device info: temperature zones that Qualcomm lists in pairs for different governors (`cpu-1-5-usr` / `cpu-1-5-step`) are merged into one line with the higher value; battery voltage and current thresholds (`pm8150b-vbat-lvl0` and similar, shown as ~4 °C) are no longer listed as temperatures
+
 ## 1.9.2 — 2026-09-28
 
 - Device info: sensors that Android lists twice — "Wakeup" and "Non-wakeup" variants, or several of the same kind — are merged into one line with a count (`pedometer · qualcomm × 4`); the section is about half as long

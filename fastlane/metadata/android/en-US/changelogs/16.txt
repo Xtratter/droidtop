@@ -1,0 +1,1 @@
+- Paired -usr/-step temperature zones merged, battery thresholds hidden

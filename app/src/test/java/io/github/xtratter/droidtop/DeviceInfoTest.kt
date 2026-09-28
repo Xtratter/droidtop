@@ -97,4 +97,12 @@ class DeviceInfoTest {
             "Touch Sensor" to "xiaomi",
             "orientation" to "xiaomi"), merged)
     }
+
+    @Test
+    fun mergesThermalZones() {
+        val merged = DeviceInfo.thermals(listOf(
+            "cpu-1-5-usr" to 48.2f, "apc-1-max-step" to 48.2f, "cpu-1-5-step" to 47.8f,
+            "cpuss-0-usr" to 46.3f, "battery" to 29.5f, "pm8150b-vbat-lvl0" to 4.3f, "pm8150b-ibat-lvl0" to 4.3f))
+        assertEquals(listOf("cpu-1-5" to 48.2f, "apc-1-max" to 48.2f, "cpuss-0" to 46.3f, "battery" to 29.5f), merged)
+    }
 }

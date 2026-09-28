@@ -1,0 +1,2 @@
+- Threads of a process with live CPU %, state and core
+- Open files: files, devices, pipes, sockets with TCP/UDP addresses

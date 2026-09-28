@@ -176,4 +176,20 @@
     <string name="c_gpu_freq_only">Frequency relative to max · load needs root</string>
     <string name="u_mhz">MHz</string>
     <string name="ch_span_s">last %1$d s</string>
+
+    <string name="act_threads">Threads</string>
+    <string name="act_files">Open files</string>
+    <string name="th_title">Threads · %1$d</string>
+    <string name="th_sub">TID %1$d · %2$s</string>
+    <string name="th_core">core %1$d</string>
+    <string name="th_none">Couldn\'t read the threads: the process has exited or access is denied</string>
+    <string name="f_title_short">Open files</string>
+    <string name="f_title">Open files · %1$d</string>
+    <string name="f_files">Files</string>
+    <string name="f_sockets">Sockets</string>
+    <string name="f_pipes">Pipes</string>
+    <string name="f_devices">Devices</string>
+    <string name="f_other">Other</string>
+    <string name="f_none">The list isn\'t available: another app\'s open files can only be seen with root (or the process has exited)</string>
+    <string name="refresh">Refresh</string>
 </resources>

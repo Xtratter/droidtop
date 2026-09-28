@@ -82,7 +82,10 @@ object ProcessDialog {
             tile(R.string.sort_mem, memV),
         ))
         grid.addView(row(
-            tile(R.string.sort_thr, thrV),
+            tile(R.string.sort_thr, thrV).apply {
+                foreground = Ui.ripple(a, 18f)
+                setOnClickListener { InspectDialog.showThreads(a, p) }
+            },
             tile(R.string.sort_time, timeV),
         ), LinearLayout.LayoutParams(-1, -2).apply { topMargin = px(8f) })
         box.addView(grid)
@@ -187,7 +190,7 @@ object ProcessDialog {
         dialog.setOnDismissListener { Sampler.remove(live) }
 
         // действия — тональные кнопки-«пилюли»
-        fun action(text: Int, danger: Boolean = false, block: () -> Unit) {
+        fun action(text: Int, danger: Boolean = false, keep: Boolean = false, block: () -> Unit) {
             val color = if (danger) Ui.HOT else Ui.primary
             box.addView(TextView(a).apply {
                 setText(text)
@@ -197,13 +200,16 @@ object ProcessDialog {
                 setTextColor(color)
                 background = Ui.pill(a, Ui.withAlpha(color, 0.14f), Ui.withAlpha(color, 0.3f))
                 foreground = Ui.ripple(a, 100f)
-                setOnClickListener { dialog.dismiss(); block() }
+                setOnClickListener { if (!keep) dialog.dismiss(); block() }
             }, LinearLayout.LayoutParams(-1, px(48f)).apply { topMargin = px(8f) })
         }
 
         a.branch(p.pid)?.let { b ->
             action(if (b.collapsed) R.string.act_expand else R.string.act_collapse) { a.toggleBranch(p.pid) }
         }
+        // списки открываются поверх карточки — после них можно вернуться к ней
+        action(R.string.act_threads, keep = true) { InspectDialog.showThreads(a, p) }
+        action(R.string.act_files, keep = true) { InspectDialog.showFiles(a, p) }
         action(R.string.act_term) { signal(a, p, "TERM") }
         action(R.string.act_kill, danger = true) { signal(a, p, "KILL") }
         if (p.state == 'T') action(R.string.act_cont) { signal(a, p, "CONT") }
@@ -256,7 +262,7 @@ object ProcessDialog {
         return lines.joinToString("\n")
     }
 
-    private fun stateName(c: Char) = when (c) {
+    fun stateName(c: Char) = when (c) {
         'R' -> R.string.st_running
         'S' -> R.string.st_sleeping
         'D' -> R.string.st_disk

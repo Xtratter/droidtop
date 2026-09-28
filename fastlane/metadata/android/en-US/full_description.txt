@@ -7,6 +7,7 @@ DroidTop shows what is running on your phone and how much it costs — inspired 
 <li>Process list with PID, user, state, CPU %, memory %, resident memory, threads, CPU time; tap a column to sort</li>
 <li>App names instead of package names, search by name, PID or user</li>
 <li>Process details: command line, peak memory, swap usage, oom_score_adj</li>
+<li>Threads of a process with live CPU %, open files and sockets with TCP/UDP addresses</li>
 <li>Actions: SIGTERM, SIGKILL, SIGSTOP/SIGCONT, force stop an app, open app info</li>
 <li>Pinch to zoom: bigger or smaller text in the htop table, from 40 seconds to 20 minutes on charts</li>
 <li>History charts of CPU, memory, GPU and battery power, plus CPU and memory of each process</li>

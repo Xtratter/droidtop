@@ -38,6 +38,8 @@ Ready-made APKs are on the [Releases](https://github.com/Xtratter/droidtop/relea
 - **App names** instead of `com.example.app`, search by name, PID or user
 - **Tap a process** for details (command line, peak memory, swap, `oom_score_adj`) and actions:
   SIGTERM, SIGKILL, SIGSTOP/SIGCONT, force stop, open "App info"
+- **Threads and open files** of a process (buttons in its card): live CPU % of every thread with its state and core;
+  open files, devices, pipes and sockets, with TCP/UDP addresses and state or the Unix socket path
 - **Floating overlay** (⋮ → "Floating overlay"): CPU, core bars, memory, GPU and the top processes.
   Drag it with a finger, tap it to open DroidTop, close it from the notification.
   In the settings you choose what it shows, its size and width, the number of top processes and whether they are
@@ -53,6 +55,8 @@ Ready-made APKs are on the [Releases](https://github.com/Xtratter/droidtop/relea
 | Process list and tree | own only | all | all |
 | Force stop apps | ❌ | ✅ | ✅ |
 | Kill any process | ❌ | shell only | ✅ |
+| Threads of a process | own only | all | all |
+| Open files and sockets | own only | shell only | all |
 
 These limits come from Android itself: since Android 7 an app only sees its own processes, and since Android 8 `/proc/stat` is hidden.
 Pick the mode by tapping the chip next to the title or via ⋮ → "Access mode".
@@ -92,6 +96,7 @@ app/src/main/java/io/github/xtratter/droidtop/
 ├── MetersView.kt     ← core and memory bars (htop table mode)
 ├── Table.kt, HeaderView.kt, ProcRowView.kt  ← process table
 ├── ProcessDialog.kt  ← process details and actions
+├── InspectDialog.kt, Inspect.kt             ← threads and open files of a process
 ├── SettingsDialog.kt, Prefs.kt              ← settings
 └── OverlayService.kt, OverlayView.kt        ← floating overlay
 ```

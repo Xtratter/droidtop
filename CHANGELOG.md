@@ -2,6 +2,11 @@
 
 [Русский](CHANGELOG.ru.md) · **English**
 
+## 1.8 — 2026-09-28
+
+- **Threads** of a process (the "Threads" button or tile in its card): every thread with its CPU %, updated live, state, the core it last ran on and nice; the busiest on top
+- **Open files** of a process: files, devices, pipes, sockets and other descriptors grouped with counts; sockets show protocol, addresses and TCP state (`TCP 10.0.0.5:51234 → 142.250.1.1:443 ESTABLISHED`) or the Unix socket path. The text can be selected and copied; "Refresh" re-reads the list. Other apps' files need root
+
 ## 1.7.1 — 2026-09-28
 
 - Overlay: on the narrow width the GPU and battery values no longer run over their labels — parts that don't fit (temperature, then clock) are dropped

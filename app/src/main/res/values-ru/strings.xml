@@ -175,4 +175,20 @@
     <string name="c_gpu_freq_only">Частота от максимальной · загрузка — только с root</string>
     <string name="u_mhz">МГц</string>
     <string name="ch_span_s">за %1$d с</string>
+
+    <string name="act_threads">Потоки</string>
+    <string name="act_files">Открытые файлы</string>
+    <string name="th_title">Потоки · %1$d</string>
+    <string name="th_sub">TID %1$d · %2$s</string>
+    <string name="th_core">ядро %1$d</string>
+    <string name="th_none">Не удалось прочитать потоки: процесс завершился или нет доступа</string>
+    <string name="f_title_short">Открытые файлы</string>
+    <string name="f_title">Открытые файлы · %1$d</string>
+    <string name="f_files">Файлы</string>
+    <string name="f_sockets">Сокеты</string>
+    <string name="f_pipes">Каналы</string>
+    <string name="f_devices">Устройства</string>
+    <string name="f_other">Прочее</string>
+    <string name="f_none">Список недоступен: открытые файлы чужого приложения видны только с root (или процесс уже завершился)</string>
+    <string name="refresh">Обновить</string>
 </resources>

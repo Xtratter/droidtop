@@ -124,6 +124,7 @@ object Sampler {
             longArrayOf(mi.totalMem, mi.availMem),
         )
         snap.battery = try { Battery.read(app) } catch (e: Exception) { null }
+        snap.interval = prefs.intervalMs / 1000f
 
         // только оверлей: полные имена и названия нужны лишь самым активным процессам
         val named = if (listeners.any { it.needsAllProcs }) snap.procs

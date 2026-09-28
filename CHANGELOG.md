@@ -2,6 +2,10 @@
 
 [Русский](CHANGELOG.ru.md) · **English**
 
+## 1.6.2 — 2026-09-28
+
+- The "last N min" label above charts no longer jumps (for example to "6 min") after the screen was off or the app was in the background: pauses and quick extra updates are not counted in the time scale
+
 ## 1.6.1 — 2026-09-28
 
 - Process details are now live: the CPU, memory, threads and CPU time tiles and the info lines update with every sample, not only when the dialog opens (while you select text there, it is left alone)

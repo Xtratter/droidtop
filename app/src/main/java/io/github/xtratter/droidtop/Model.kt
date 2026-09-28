@@ -53,6 +53,8 @@ class Snapshot(
     /** Видим все процессы и загрузку CPU (root или Shizuku). */
     val full get() = access != Access.USER
     var battery: Battery? = null
+    /** Интервал опроса из настроек, в секундах. */
+    var interval = 2f
     val batteryTemp get() = battery?.temp ?: Float.NaN
     val threads = procs.sumOf { it.threads }
     val running = if (runningTasks >= 0) runningTasks else procs.count { it.state == 'R' }

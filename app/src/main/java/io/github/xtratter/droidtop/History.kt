@@ -48,8 +48,12 @@ object History {
 
     fun add(s: Snapshot) {
         if (lastUptime >= 0 && s.uptime > lastUptime) {
-            val dt = (s.uptime - lastUptime).toFloat().coerceIn(0.2f, 60f)
-            secondsPerPoint = secondsPerPoint * 0.8f + dt * 0.2f
+            // в среднее берём только обычные промежутки: пауза (экран выключен, приложение свёрнуто),
+            // быстрый второй замер и обновление по кнопке исказили бы подпись «за N мин»
+            val dt = (s.uptime - lastUptime).toFloat()
+            if (dt in s.interval * 0.5f..s.interval * 2f) secondsPerPoint = secondsPerPoint * 0.8f + dt * 0.2f
+        } else if (lastUptime < 0) {
+            secondsPerPoint = s.interval
         }
         lastUptime = s.uptime
         cpu.add(if (!s.cpu.isNaN()) s.cpu else {

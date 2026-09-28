@@ -169,7 +169,8 @@ class OverlayView(ctx: Context, private val scale: Float, widthDp: Int) : View(c
                     val left = pad + i * (bw + g)
                     val u = s.cores[i].usage
                     p.shader = null
-                    if (!u.isNaN() && u >= 85f) p.color = Ui.HOT else p.shader = barShader
+                    if (!u.isNaN() && u >= 85f) p.color = Ui.HOT
+                    else { p.color = 0xFF000000.toInt(); p.shader = barShader }   // альфа цвета умножается на градиент
                     PillBar.draw(c, left, top, left + bw, top + coresH, minOf(bw / 2, dp(5f)), v.getOrElse(i + 2) { 0f }, trackP, p)
                 }
                 p.shader = null
@@ -177,14 +178,22 @@ class OverlayView(ctx: Context, private val scale: Float, widthDp: Int) : View(c
             y += coresH
         }
 
+        /** Значение из частей «a · b · c»: на узкой плашке лишние части справа отбрасываем. */
+        fun fit(label: String, parts: List<String>): String {
+            val room = w - 2 * pad - labelP.measureText(label) - dp(8f)
+            var n = parts.size
+            while (n > 1 && rightP.measureText(parts.take(n).joinToString(" · ")) > room) n--
+            return Ui.ellipsize(rightP, parts.take(n).joinToString(" · "), room)
+        }
+
         // строка «подпись — значение» и полоска под ней
-        fun meter(label: String, value: String, frac: Float, color: Int) {
+        fun meter(label: String, parts: List<String>, frac: Float, color: Int) {
             gap(10f)
             if (c != null) {
                 val base = y + dp(11f)
                 c.drawText(label, pad, base, labelP)
                 rightP.color = Ui.TEXT
-                c.drawText(value, right, base, rightP)
+                c.drawText(fit(label, parts), right, base, rightP)
                 val top = y + dp(18f)
                 r.set(pad, top, right, top + barH)
                 p.color = Ui.TRACK; c.drawRoundRect(r, barH / 2, barH / 2, p)
@@ -196,7 +205,7 @@ class OverlayView(ctx: Context, private val scale: Float, widthDp: Int) : View(c
 
         if (has(Part.RAM) && s != null) {
             val frac = if (v.size >= 2) v[1] else 0f
-            meter("RAM", Fmt.size(s.memTotal - s.memAvail) + " / " + Fmt.size(s.memTotal), frac, Ui.load(frac * 100, 75f, 90f))
+            meter("RAM", listOf(Fmt.size(s.memTotal - s.memAvail) + " / " + Fmt.size(s.memTotal)), frac, Ui.load(frac * 100, 75f, 90f))
         }
 
         val gp = s?.gpu
@@ -205,7 +214,7 @@ class OverlayView(ctx: Context, private val scale: Float, widthDp: Int) : View(c
             if (!gp.busy.isNaN()) parts += Fmt.pct(gp.busy) + "%"
             if (gp.freqMHz > 0) parts += "${gp.freqMHz} " + context.getString(R.string.u_mhz)
             if (!gp.temp.isNaN()) parts += Fmt.temp(gp.temp)
-            meter("GPU", parts.joinToString(" · "), gp.fraction,
+            meter("GPU", parts, gp.fraction,
                 if (!gp.busy.isNaN()) Ui.load(gp.busy, 50f, 85f) else Ui.secondary)
         }
 
@@ -215,10 +224,11 @@ class OverlayView(ctx: Context, private val scale: Float, widthDp: Int) : View(c
             gap(10f)
             if (c != null) {
                 val base = y + dp(11f)
-                c.drawText(if (b.charging) "⚡ BAT" else "BAT", pad, base, labelP)
+                val label = if (b.charging) "⚡ BAT" else "BAT"
+                c.drawText(label, pad, base, labelP)
                 rightP.color = if (b.charging) Ui.OK else Ui.TEXT
-                c.drawText(String.format(Locale.getDefault(), "%.2f %s · %d%%", b.powerW, context.getString(R.string.u_w), b.level),
-                    right, base, rightP)
+                c.drawText(fit(label, listOf(String.format(Locale.getDefault(), "%.2f %s", b.powerW,
+                    context.getString(R.string.u_w)), "${b.level}%")), right, base, rightP)
             }
             y += dp(14f)
         }

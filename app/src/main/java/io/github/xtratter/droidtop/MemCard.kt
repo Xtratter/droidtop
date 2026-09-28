@@ -85,7 +85,8 @@ class MemCard(ctx: Context, attrs: AttributeSet? = null) : View(ctx, attrs) {
             c.drawRoundRect(r, barH / 2, barH / 2, p)
         }
         if (used > 0.01f) {
-            bar(y, barH, used); p.shader = usedShader
+            // непрозрачный цвет: иначе градиент берёт альфу 35 % от полосы кэша
+            bar(y, barH, used); p.color = 0xFF000000.toInt(); p.shader = usedShader
             c.drawRoundRect(r, barH / 2, barH / 2, p)
         }
 

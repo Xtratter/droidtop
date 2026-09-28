@@ -119,7 +119,8 @@ class CpuCard(ctx: Context, attrs: AttributeSet? = null) : View(ctx, attrs) {
             when {
                 !core.usage.isNaN() && core.usage >= 85f -> fillP.color = Ui.HOT
                 core.usage.isNaN() -> fillP.color = Ui.withAlpha(Ui.primary, 0.75f)
-                else -> fillP.shader = barShader
+                // непрозрачный цвет: его альфа умножается на градиент, а после «пилюли» температуры там 18 %
+                else -> { fillP.color = 0xFF000000.toInt(); fillP.shader = barShader }
             }
             PillBar.draw(c, left, top, left + bw, top + barsH, rad, v.getOrElse(i + 1) { 0f }, trackP, fillP)
             val fr = snap.cores[i].freqKHz

@@ -1,0 +1,3 @@
+- Overlay: GPU/battery values fit the narrow width
+- Core and memory bars no longer faded
+- "CPU" stays in capitals in overlay settings

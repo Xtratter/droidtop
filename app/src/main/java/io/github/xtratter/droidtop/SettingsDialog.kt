@@ -9,6 +9,10 @@ import android.widget.TextView
 
 /** Настройки: собираем простые строки-переключатели и строки-выбор. */
 object SettingsDialog {
+    /** «Загрузка CPU» → «загрузка CPU», но «GPU» так и остаётся «GPU». */
+    private fun lowerFirst(s: String) =
+        if (s.length > 1 && s[1].isLowerCase()) s[0].lowercaseChar() + s.substring(1) else s
+
     fun show(a: MainActivity, prefs: Prefs) {
         val dp = a.resources.displayMetrics.density
         val box = LinearLayout(a).apply {
@@ -72,7 +76,7 @@ object SettingsDialog {
             fun refresh() {
                 val on = values.indices.filter { get() and values[it] != 0 }
                 tv.text = a.getString(title) + ": " + if (on.isEmpty()) a.getString(R.string.s_nothing)
-                else on.joinToString(", ") { a.getString(names[it]).lowercase() }
+                else on.joinToString(", ") { lowerFirst(a.getString(names[it])) }
             }
             refresh()
             tv.setOnClickListener {

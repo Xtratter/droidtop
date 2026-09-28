@@ -2,6 +2,12 @@
 
 [Русский](CHANGELOG.ru.md) · **English**
 
+## 1.7.1 — 2026-09-28
+
+- Overlay: on the narrow width the GPU and battery values no longer run over their labels — parts that don't fit (temperature, then clock) are dropped
+- Core bars (overlay and CPU card) and the used-memory bar are no longer faded: their gradient could pick up a semi-transparent color from the element drawn before
+- Settings: the overlay summary keeps "CPU" in capitals ("load CPU" instead of "load cpu")
+
 ## 1.7 — 2026-09-28
 
 - **Themes** (⋮ → Settings → Theme): standard (as before), follow system (standard or light with Android's dark mode), AMOLED black, light, graphite and classic htop

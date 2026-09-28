@@ -2,6 +2,10 @@
 
 [Русский](CHANGELOG.ru.md) · **English**
 
+## 1.6.1 — 2026-09-28
+
+- Process details are now live: the CPU, memory, threads and CPU time tiles and the info lines update with every sample, not only when the dialog opens (while you select text there, it is left alone)
+
 ## 1.6 — 2026-09-28
 
 Uses much less CPU and battery:

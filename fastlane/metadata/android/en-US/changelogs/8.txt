@@ -1,0 +1,1 @@
+Process details are live: CPU, memory, threads, CPU time and info lines update with every sample.

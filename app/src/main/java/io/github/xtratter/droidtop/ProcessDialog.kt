@@ -50,14 +50,27 @@ object ProcessDialog {
         }, LinearLayout.LayoutParams(0, -2, 1f))
         box.addView(head)
 
-        // плитки с главными цифрами
-        fun tile(label: Int, value: String, color: Int) = LinearLayout(a).apply {
+        // плитки с главными цифрами — обновляются с каждым замером, пока диалог открыт
+        fun value() = TextView(a).apply { textSize = 18f; typeface = Ui.bold; setTextColor(Ui.TEXT) }
+        val cpuV = value()
+        val memV = value()
+        val thrV = value()
+        val timeV = value()
+        fun tile(label: Int, v: TextView) = LinearLayout(a).apply {
             orientation = LinearLayout.VERTICAL
             background = GlassDrawable(a, 18f)
             setPadding(px(14f), px(10f), px(14f), px(12f))
             addView(TextView(a).apply { setText(label); textSize = 12f; setTextColor(Ui.TEXT2) })
-            addView(TextView(a).apply { text = value; textSize = 18f; typeface = Ui.bold; setTextColor(color) })
+            addView(v)
         }
+        fun setText(v: TextView, text: String) { if (v.text.toString() != text) v.text = text }
+        fun fillTiles(q: ProcInfo, snap: Snapshot) {
+            setText(cpuV, Fmt.pct(q.cpu) + "%"); cpuV.setTextColor(Ui.load(q.cpu, 10f, 50f))
+            setText(memV, Fmt.size(q.rss) + " · " + Fmt.pct(q.mem) + "%")
+            setText(thrV, q.threads.toString())
+            setText(timeV, Fmt.cpuTime(q.cpuTicks, snap.clkTck))
+        }
+        fillTiles(p, s)
         fun row(vararg tiles: View) = LinearLayout(a).apply {
             tiles.forEachIndexed { i, t ->
                 addView(t, LinearLayout.LayoutParams(0, -2, 1f).apply { if (i > 0) leftMargin = px(8f) })
@@ -65,12 +78,12 @@ object ProcessDialog {
         }
         val grid = LinearLayout(a).apply { orientation = LinearLayout.VERTICAL; setPadding(0, px(18f), 0, px(6f)) }
         grid.addView(row(
-            tile(R.string.sort_cpu, Fmt.pct(p.cpu) + "%", Ui.load(p.cpu, 10f, 50f)),
-            tile(R.string.sort_mem, Fmt.size(p.rss) + " · " + Fmt.pct(p.mem) + "%", Ui.TEXT),
+            tile(R.string.sort_cpu, cpuV),
+            tile(R.string.sort_mem, memV),
         ))
         grid.addView(row(
-            tile(R.string.sort_thr, p.threads.toString(), Ui.TEXT),
-            tile(R.string.sort_time, Fmt.cpuTime(p.cpuTicks, s.clkTck), Ui.TEXT),
+            tile(R.string.sort_thr, thrV),
+            tile(R.string.sort_time, timeV),
         ), LinearLayout.LayoutParams(-1, -2).apply { topMargin = px(8f) })
         box.addView(grid)
 
@@ -90,7 +103,13 @@ object ProcessDialog {
         fillCharts()
         box.addView(cpuChart, LinearLayout.LayoutParams(-1, -2).apply { topMargin = px(8f) })
         box.addView(memChart)
-        val live = Sampler.Listener { fillCharts() }
+        // задаётся ниже, когда готов блок подробностей
+        var onSample: (ProcInfo, Snapshot) -> Unit = { _, _ -> }
+        val live = Sampler.Listener { snap ->
+            // тот же процесс в новом замере (PID мог достаться другому — сверяем время старта)
+            snap.procs.firstOrNull { it.pid == p.pid && it.startTicks == p.startTicks }?.let { onSample(it, snap) }
+            fillCharts()
+        }
 
         // родитель и потомки — нажатие открывает их карточку
         var dlg: AlertDialog? = null
@@ -151,6 +170,13 @@ object ProcessDialog {
             setPadding(px(4f), px(10f), px(4f), px(10f))
         }
         box.addView(details)
+        var extra = ""      // строки, дочитанные из /proc/PID/status и cmdline
+        onSample = { q, snap ->
+            fillTiles(q, snap)
+            val t = baseInfo(a, q, snap) + extra
+            // пока пользователь выделяет текст (например, чтобы скопировать команду), не трогаем его
+            if (!details.hasSelection() && details.text.toString() != t) details.text = t
+        }
 
         val dialog = AlertDialog.Builder(a)
             .setView(ScrollView(a).apply { addView(box) })
@@ -213,6 +239,7 @@ object ProcessDialog {
                 }
             }
             parts.getOrNull(2)?.takeIf { it.isNotEmpty() }?.let { sb.append("\noom_score_adj: ").append(it) }
+            extra = sb.toString()
             details.append(sb)
         }
     }

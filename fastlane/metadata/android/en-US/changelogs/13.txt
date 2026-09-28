@@ -1,0 +1,4 @@
+- Device info in the spirit of AIDA64 (⋮ → Device info), copyable
+- Copy a summary, process details, thread and file lists
+- Record an app's CPU and memory to a CSV file in Download/DroidTop
+- htop table switch is now only in Settings

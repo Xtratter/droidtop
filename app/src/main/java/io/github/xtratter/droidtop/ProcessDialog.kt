@@ -210,6 +210,15 @@ object ProcessDialog {
         // списки открываются поверх карточки — после них можно вернуться к ней
         action(R.string.act_threads, keep = true) { InspectDialog.showThreads(a, p) }
         action(R.string.act_files, keep = true) { InspectDialog.showFiles(a, p) }
+        action(R.string.act_copy, keep = true) {
+            val head = listOfNotNull(p.title, p.pkg?.takeIf { it != p.title }, p.name.takeIf { it != p.title && it != p.pkg })
+            Clip.copy(a, p.title, head.joinToString("\n") + "\n\n" + details.text)
+        }
+        val rec = RecordService.current
+        when {
+            rec == null -> if (s.full) action(R.string.act_record) { a.startRecording(p) }
+            rec.matches(p) -> action(R.string.act_record_stop, danger = true) { RecordService.stop(a) }
+        }
         action(R.string.act_term) { signal(a, p, "TERM") }
         action(R.string.act_kill, danger = true) { signal(a, p, "KILL") }
         if (p.state == 'T') action(R.string.act_cont) { signal(a, p, "CONT") }

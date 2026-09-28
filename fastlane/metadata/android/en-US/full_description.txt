@@ -8,6 +8,9 @@ DroidTop shows what is running on your phone and how much it costs — inspired 
 <li>App names instead of package names, search by name, PID or user</li>
 <li>Process details: command line, peak memory, swap usage, oom_score_adj</li>
 <li>Threads of a process with live CPU %, open files and sockets with TCP/UDP addresses</li>
+<li>Device info in the spirit of AIDA64: SoC and core clusters, memory, storage, display, GPU, battery health, cameras, sensors, temperatures</li>
+<li>Record CPU and memory of a chosen app to a CSV file in the background</li>
+<li>Copy a state summary, process details and lists to the clipboard</li>
 <li>Actions: SIGTERM, SIGKILL, SIGSTOP/SIGCONT, force stop an app, open app info</li>
 <li>Pinch to zoom: bigger or smaller text in the htop table, from 40 seconds to 20 minutes on charts</li>
 <li>History charts of CPU, memory, GPU and battery power, plus CPU and memory of each process</li>

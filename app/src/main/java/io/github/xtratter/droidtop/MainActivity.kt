@@ -446,11 +446,17 @@ class MainActivity : Activity(), Sampler.Listener {
     private fun showMenu(anchor: View) {
         val pm = PopupMenu(this, anchor, Gravity.END)
         pm.menuInflater.inflate(R.menu.main, pm.menu)
-        pm.menu.findItem(R.id.view_mode).isChecked = prefs.tableMode
+        RecordService.current?.let { t ->
+            pm.menu.findItem(R.id.record_stop).apply { isVisible = true; title = getString(R.string.rec_stop_named, t.label) }
+        }
         pm.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.root -> showAccessDialog()
-                R.id.view_mode -> { prefs.tableMode = !prefs.tableMode; applyPrefs() }
+                R.id.device -> DeviceDialog.show(this)
+                R.id.copy_summary -> Sampler.last?.let {
+                    Clip.copy(this, getString(R.string.app_name), Summary.text(this, it, prefs.kernelThreads))
+                }
+                R.id.record_stop -> RecordService.stop(this)
                 R.id.settings -> SettingsDialog.show(this, prefs)
                 R.id.about -> showAbout()
             }
@@ -556,6 +562,15 @@ class MainActivity : Activity(), Sampler.Listener {
         ) requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
         OverlayService.start(this)
         Toast.makeText(this, R.string.overlay_started, Toast.LENGTH_SHORT).show()
+    }
+
+    /** Запись статистики процесса в файл (уведомление о записи — нужно разрешение на Android 13+). */
+    fun startRecording(p: ProcInfo) {
+        if (Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
+        RecordService.start(this, p)
+        Toast.makeText(this, getString(R.string.rec_started, p.label ?: p.title), Toast.LENGTH_LONG).show()
     }
 
     private fun showAbout() {

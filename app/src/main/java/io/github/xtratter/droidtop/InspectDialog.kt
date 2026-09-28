@@ -47,7 +47,14 @@ object InspectDialog {
         AlertDialog.Builder(a)
             .setView(ScrollView(a).apply { addView(f.box) })
             .setNegativeButton(R.string.close, null)
+            .setPositiveButton(R.string.copy, null)
             .create()
+
+    /** «Копировать» не закрывает диалог; [text] — null, пока список не загружен. */
+    private fun copyButton(a: MainActivity, d: AlertDialog, p: ProcInfo, text: () -> String?) =
+        d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            text()?.let { Clip.copy(a, p.title, "${p.title} (PID ${p.pid})\n$it") }
+        }
 
     /** Потоки с загрузкой CPU — обновляются с каждым замером, пока список открыт. */
     fun showThreads(a: MainActivity, p: ProcInfo) {
@@ -78,6 +85,7 @@ object InspectDialog {
         }
         val more = TextView(a).apply { textSize = 12f; setTextColor(Ui.TEXT3); setPadding(px(4f), px(6f), 0, 0) }
 
+        var last: List<Inspect.Thread> = emptyList()
         var prev: Map<Int, Long> = emptyMap()
         var prevAt = 0L
         var busy = false
@@ -124,6 +132,7 @@ object InspectDialog {
                 if (prevAt > 0) Inspect.applyCpu(list, prev, (now - prevAt) / 1000.0, clkTck)
                 prev = list.associate { it.tid to it.ticks }
                 prevAt = now
+                last = list
                 show(list)
             }
         }
@@ -134,6 +143,12 @@ object InspectDialog {
         d.setOnDismissListener { Sampler.remove(live) }
         d.show()
         Ui.glassDialog(d)
+        copyButton(a, d, p) {
+            last.takeIf { it.isNotEmpty() }?.sortedByDescending { if (it.cpu.isNaN()) -1f else it.cpu }?.joinToString("\n") {
+                String.format(java.util.Locale.ROOT, "%7d  %c  %6s%%  %s", it.tid, it.state,
+                    if (it.cpu.isNaN()) "-" else Fmt.pct(it.cpu), it.name)
+            }
+        }
         Sampler.add(live)   // сразу отдаёт последний замер — первый список без ожидания
     }
 
@@ -147,7 +162,9 @@ object InspectDialog {
             .setView(ScrollView(a).apply { addView(f.box) })
             .setNegativeButton(R.string.close, null)
             .setNeutralButton(R.string.refresh, null)
+            .setPositiveButton(R.string.copy, null)
             .create()
+        var last: List<Inspect.Fd> = emptyList()
 
         val names = mapOf(
             Inspect.Kind.FILE to R.string.f_files, Inspect.Kind.SOCKET to R.string.f_sockets,
@@ -193,7 +210,7 @@ object InspectDialog {
 
         fun load() {
             Sampler.exec(Inspect.filesCommand(p.pid)) { out ->
-                if (d.isShowing) show(Inspect.parseFiles(out.orEmpty()))
+                if (d.isShowing) { last = Inspect.parseFiles(out.orEmpty()); show(last) }
             }
         }
 
@@ -202,6 +219,9 @@ object InspectDialog {
         Ui.glassDialog(d)
         // своя обработка, чтобы «Обновить» не закрывало диалог
         d.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener { load() }
+        copyButton(a, d, p) {
+            last.takeIf { it.isNotEmpty() }?.joinToString("\n") { "${it.fd}  ${it.socket ?: it.target}" }
+        }
         load()
     }
 }

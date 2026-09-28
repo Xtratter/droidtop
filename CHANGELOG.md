@@ -2,6 +2,13 @@
 
 [Русский](CHANGELOG.ru.md) · **English**
 
+## 1.9 — 2026-09-28
+
+- **Device info** (⋮ → Device info), in the spirit of AIDA64: device and model, Android, security patch, firmware, kernel, SELinux, bootloader; SoC with core clusters (Cortex names, frequency ranges, governor); RAM, swap and zram, storage size and type; display resolution, diagonal, density, refresh rates, HDR; GPU with OpenGL ES and Vulkan versions; battery health, technology, charge cycles, design and current capacity; cameras; sensors; all temperature sensors. Tap a line to copy it, long-press a section title to copy the section, or "Copy all"
+- **Copy to clipboard**: ⋮ → "Copy summary" (CPU, cores, memory, swap, GPU, battery, load, top 10 processes), "Copy details" in a process card, "Copy" in the thread and open-file lists
+- **Record an app's stats to a file**: "Record stats to a file" in a process card (root or Shizuku) writes a CSV to `Download/DroidTop/` on every sample — CPU, memory, process and thread count of all the app's processes, plus system CPU, CPU temperature, memory, swap, GPU and battery. It keeps going in the background with its own notification; stop it there, in ⋮ or in the process card. The final notification shows the averages and maximums and opens the file
+- The htop table switch moved from the ⋮ menu to Settings only
+
 ## 1.8 — 2026-09-28
 
 - **Threads** of a process (the "Threads" button or tile in its card): every thread with its CPU %, updated live, state, the core it last ran on and nice; the busiest on top

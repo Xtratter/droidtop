@@ -21,7 +21,7 @@ Ready-made APKs are on the [Releases](https://github.com/Xtratter/droidtop/relea
 ## Features
 
 - **Material 3 "liquid glass" design**: translucent cards on a soft colored background, colors follow
-  the wallpaper (Android 12+), smooth animations. If you prefer the classic look, there is an htop table mode
+  the wallpaper (Android 12+), smooth animations. If you prefer the classic look, there is an htop table mode (⋮ → Settings)
 - **Themes**: standard, follow system, AMOLED black, light, graphite and classic htop (⋮ → Settings → Theme)
 - **Pinch to zoom in the htop table**: spread or pinch two fingers to make the table and meters text bigger
   or smaller (the size is remembered and can also be picked in the settings)
@@ -40,6 +40,14 @@ Ready-made APKs are on the [Releases](https://github.com/Xtratter/droidtop/relea
   SIGTERM, SIGKILL, SIGSTOP/SIGCONT, force stop, open "App info"
 - **Threads and open files** of a process (buttons in its card): live CPU % of every thread with its state and core;
   open files, devices, pipes and sockets, with TCP/UDP addresses and state or the Unix socket path
+- **Device info** (⋮ → "Device info"), in the spirit of AIDA64: model, Android and kernel, SoC with its core clusters
+  (Cortex names and frequency ranges), RAM, storage, display, GPU with OpenGL ES / Vulkan, battery health and cycles,
+  cameras, sensors and all temperature sensors. Tap a line to copy it, long-press a section to copy the section, or copy everything
+- **Copy to clipboard**: a summary of the current state (⋮ → "Copy summary": CPU, cores, memory, GPU, battery, top 10 processes),
+  process details, thread and open-file lists
+- **Record an app's stats to a file**: "Record stats to a file" in a process card writes a CSV to `Download/DroidTop/` every
+  sample — CPU and memory of all the app's processes plus system CPU, temperature, memory, GPU and battery — until you stop it
+  from the notification or ⋮. When it stops, a notification shows the averages and maximums and opens the file
 - **Floating overlay** (⋮ → "Floating overlay"): CPU, core bars, memory, GPU and the top processes.
   Drag it with a finger, tap it to open DroidTop, close it from the notification.
   In the settings you choose what it shows, its size and width, the number of top processes and whether they are
@@ -96,6 +104,9 @@ app/src/main/java/io/github/xtratter/droidtop/
 ├── MetersView.kt     ← core and memory bars (htop table mode)
 ├── Table.kt, HeaderView.kt, ProcRowView.kt  ← process table
 ├── ProcessDialog.kt  ← process details and actions
+├── DeviceInfo.kt, DeviceDialog.kt           ← device info
+├── Record.kt, RecordService.kt              ← recording an app's stats to CSV
+├── Summary.kt, Clip.kt                      ← text summary, clipboard
 ├── InspectDialog.kt, Inspect.kt             ← threads and open files of a process
 ├── SettingsDialog.kt, Prefs.kt              ← settings
 └── OverlayService.kt, OverlayView.kt        ← floating overlay

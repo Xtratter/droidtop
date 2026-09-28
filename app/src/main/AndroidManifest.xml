@@ -33,6 +33,15 @@
                 android:value="Floating system resource monitor shown over other apps" />
         </service>
 
+        <service
+            android:name=".RecordService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Recording CPU and memory usage of an app chosen by the user to a CSV file" />
+        </service>
+
         <provider
             android:name="rikka.shizuku.ShizukuProvider"
             android:authorities="${applicationId}.shizuku"

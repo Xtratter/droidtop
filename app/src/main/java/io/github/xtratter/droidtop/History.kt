@@ -22,7 +22,10 @@ class Series(val capacity: Int = History.SIZE) {
  * Пишется в главном потоке прямо перед рассылкой замера.
  */
 object History {
-    const val SIZE = 150
+    /** Сколько точек хранится для общих графиков (при замере раз в 2 с — 20 минут). */
+    const val SIZE = 600
+    /** Для каждого процесса храним меньше, чтобы не тратить память на сотни процессов. */
+    const val PROC_SIZE = 150
 
     val cpu = Series()
     val mem = Series()
@@ -33,8 +36,8 @@ object History {
     private var lastUptime = -1.0
 
     class Proc {
-        val cpu = Series()
-        val rss = Series()
+        val cpu = Series(PROC_SIZE)
+        val rss = Series(PROC_SIZE)
     }
 
     private var procs = HashMap<Long, Proc>()

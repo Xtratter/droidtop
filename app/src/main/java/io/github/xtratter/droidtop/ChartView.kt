@@ -9,7 +9,7 @@ import android.view.View
 /** Отдельный график с подписью — для карточки процесса. */
 class ChartView(ctx: Context, private val title: String) : View(ctx) {
     private fun dp(v: Float) = Ui.dp(context, v)
-    val chart = Chart(this)
+    val chart = Chart(this).apply { capacity = History.PROC_SIZE }
     private val titleP = Ui.textPaint(ctx, 12f, Ui.medium, Ui.TEXT2)
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {

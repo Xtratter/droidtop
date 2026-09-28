@@ -1,106 +1,107 @@
 # 📊 DroidTop
 
-Монитор процессов и ресурсов для Android по мотивам **htop**: какие процессы работают,
-сколько они едят процессора и памяти, как загружено каждое ядро — и всё это ещё и в
-плавающем окошке поверх других приложений.
+[Русский](README.ru.md) · **English**
 
-*An htop-like process & resource monitor for Android with root mode and a floating overlay.*
+A process and resource monitor for Android inspired by **htop**: which processes are running,
+how much CPU and memory they use, how busy every core and the GPU are, all of it also available
+in a small floating window on top of other apps.
 
-## Как это выглядит
+## Screenshots
 
-| Главный экран | Список процессов | Процесс |
+| Main screen | Process list | Process |
 |:---:|:---:|:---:|
 | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.jpg" width="240"> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpg" width="240"> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpg" width="240"> |
-| **Таблица htop и оверлей** | **Без root** | |
+| **htop table and overlay** | **Without root** | |
 | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpg" width="240"> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5.jpg" width="240"> | |
 
-## Скачать
+## Download
 
-Готовые APK — в разделе [Releases](https://github.com/Xtratter/droidtop/releases). Нужен Android 8.0 или новее.
+Ready-made APKs are on the [Releases](https://github.com/Xtratter/droidtop/releases) page. Android 8.0 or newer is required.
 
-## Возможности
+## Features
 
-- **Дизайн Material 3 с «жидким стеклом»** — полупрозрачные карточки поверх мягкого цветного фона,
-  цвета подстраиваются под обои (Android 12+), плавные анимации. Любителям классики — режим таблицы htop
+- **Material 3 "liquid glass" design**: translucent cards on a soft colored background, colors follow
+  the wallpaper (Android 12+), smooth animations. If you prefer the classic look, there is an htop table mode
+- **Pinch to zoom in the htop table**: spread or pinch two fingers to make the table and meters text bigger
+  or smaller (the size is remembered and can also be picked in the settings)
+- **htop-style meters**: load and frequency of every core, memory, swap (zram), tasks,
+  load average, uptime, CPU and battery temperature
+- **Process list**: PID, USER, S, CPU%, MEM%, RES, THR, TIME+. Tap a column header to sort,
+  tap again to reverse. Extra columns hide on narrow screens and come back in landscape
+- **Process tree** (the "Tree" chip, like F5 in htop) shows who started whom: `init` → `zygote64` → apps → their
+  child processes. Tap the icon to collapse a branch. The process card links to the parent and all children
+- **GPU**: load, frequency, model and temperature for Adreno or Mali, shown as a card with a chart, a line in the htop table and in the overlay
+- **History charts** of CPU, memory, GPU and battery power for the last 20 minutes, plus CPU and memory in the process card.
+  Drag a finger over a chart to see the value at any moment. Spread or pinch two fingers to show from 40 seconds up to 20 minutes
+- **Battery**: power in watts, current, voltage, temperature and a "≈ … left" / "full in …" estimate (no root needed)
+- **App names** instead of `com.example.app`, search by name, PID or user
+- **Tap a process** for details (command line, peak memory, swap, `oom_score_adj`) and actions:
+  SIGTERM, SIGKILL, SIGSTOP/SIGCONT, force stop, open "App info"
+- **Floating overlay** (⋮ → "Floating overlay"): CPU, core bars, memory, GPU and the top processes.
+  Drag it with a finger, tap it to open DroidTop, close it from the notification
 
-- **Метры как в htop** — загрузка и частота каждого ядра, память, подкачка (zram), задачи,
-  средняя нагрузка, время работы, температура CPU и батареи
-- **Список процессов** — PID, USER, S, CPU%, MEM%, RES, THR, TIME+; нажатие на заголовок колонки сортирует
-  (повторное — меняет направление). На узком экране лишние колонки прячутся, в альбомной ориентации появляются
-- **Дерево процессов** (чип «Дерево», как F5 в htop) — кто кого запустил: `init` → `zygote64` → приложения → их
-  дочерние процессы. Нажатие на значок сворачивает ветку, в карточке процесса есть ссылки на родителя и всех потомков
-- **Видеочип (GPU)**: загрузка, частота, модель и температура Adreno или Mali — карточка с графиком, строка в таблице htop и в оверлее.
-- **Графики истории** CPU, памяти и мощности батареи за последние минуты, а в карточке процесса — его CPU и память.
-  Проведите пальцем по графику — увидите значение в любой момент
-- **Батарея** — мощность в ваттах, ток, напряжение, температура и прогноз «осталось ≈ …» / «до полного …» (без root)
-- **Названия приложений** вместо `com.example.app`, поиск по имени, PID или пользователю
-- **Нажатие на процесс** — подробности (командная строка, пик памяти, подкачка, `oom_score_adj`) и действия:
-  SIGTERM, SIGKILL, SIGSTOP/SIGCONT, остановить приложение, открыть «О приложении»
-- **Плавающий оверлей** (⋮ → «Плавающий оверлей»): CPU, столбики ядер, память и топ процессов.
-  Перетаскивается пальцем, нажатие открывает DroidTop, закрыть — из уведомления
+## Access modes: normal, Shizuku, root
 
-## Режимы доступа: обычный, Shizuku, root
-
-| | Обычный | [Shizuku](https://shizuku.rikka.app/) | Root |
+| | Normal | [Shizuku](https://shizuku.rikka.app/) | Root |
 |---|:---:|:---:|:---:|
-| Память, подкачка, частоты ядер, температуры, батарея | ✅ | ✅ | ✅ |
-| Загрузка CPU (общая и по ядрам) | ❌ | ✅ | ✅ |
-| Загрузка и частота GPU (Adreno, Mali) | обычно ❌ | зависит от прошивки | ✅ |
-| Список процессов и дерево | только свои | все | все |
-| Остановка приложений (force stop) | ❌ | ✅ | ✅ |
-| Завершение любых процессов (kill) | ❌ | только shell | ✅ |
+| Memory, swap, core frequencies, temperatures, battery | ✅ | ✅ | ✅ |
+| CPU load (total and per core) | ❌ | ✅ | ✅ |
+| GPU load and frequency (Adreno, Mali) | usually ❌ | depends on the ROM | ✅ |
+| Process list and tree | own only | all | all |
+| Force stop apps | ❌ | ✅ | ✅ |
+| Kill any process | ❌ | shell only | ✅ |
 
-Так решил Android: с версии 7 приложение видит только свои процессы, с версии 8 скрыт `/proc/stat`.
-Режим выбирается нажатием на чип рядом с названием или в меню ⋮ → «Режим доступа».
+These limits come from Android itself: since Android 7 an app only sees its own processes, and since Android 8 `/proc/stat` is hidden.
+Pick the mode by tapping the chip next to the title or via ⋮ → "Access mode".
 
-- **Shizuku — без root.** Бесплатное приложение [Shizuku](https://shizuku.rikka.app/download/) даёт права ADB:
-  установите его, запустите службу через «Беспроводную отладку» (Android 11+) и выберите режим Shizuku —
-  DroidTop спросит разрешение. После перезагрузки телефона службу Shizuku нужно запустить снова.
-- **Root** — KernelSU, Magisk или APatch: разрешите DroidTop в менеджере root.
+- **Shizuku, no root.** The free [Shizuku](https://shizuku.rikka.app/download/) app grants ADB permissions:
+  install it, start its service via "Wireless debugging" (Android 11+) and choose the Shizuku mode.
+  DroidTop will ask for permission. After a reboot the Shizuku service has to be started again.
+- **Root**: KernelSU, Magisk or APatch. Allow DroidTop in your root manager.
 
 > [!WARNING]
-> Завершение системных процессов (`system_server`, `surfaceflinger` и т. п.) может подвесить или перезагрузить телефон.
-> DroidTop спрашивает подтверждение, но будьте внимательны.
+> Killing system processes (`system_server`, `surfaceflinger` and so on) can freeze or reboot the phone.
+> DroidTop asks for confirmation, but be careful.
 
-## Как это устроено
+## How it works
 
-Никаких нативных библиотек: приложение держит открытую оболочку (`sh` или `su`) и раз в
-несколько секунд одной командой читает `/proc/stat`, `/proc/meminfo`, `/proc/[pid]/stat`,
-частоты из `/sys/devices/system/cpu` и температуры из `/sys/class/thermal`. Полные имена
-процессов берутся из `ps` только для новых PID.
+No native libraries: the app keeps a shell (`sh` or `su`) open and every few seconds reads
+`/proc/stat`, `/proc/meminfo`, `/proc/[pid]/stat`, frequencies from `/sys/devices/system/cpu`,
+temperatures from `/sys/class/thermal` and GPU data from `/sys/class/kgsl` or `/sys/kernel/gpu`
+with a single command. Full process names come from `ps`, only for new PIDs.
 
 ```
 app/src/main/java/io/github/xtratter/droidtop/
-├── Shell.kt          ← постоянная оболочка: sh, sh через Shizuku или su
-├── ProcParser.kt     ← скрипт опроса и разбор /proc
-├── Sampler.kt        ← фоновый поток опроса, общий для экрана и оверлея
-├── Model.kt          ← Snapshot, ProcInfo, сортировки
-├── Tree.kt           ← дерево процессов (родители и потомки)
-├── History.kt, Chart.kt, ChartView.kt       ← история замеров и графики
-├── Battery.kt, BatteryCard.kt               ← ток, мощность и прогноз батареи
-├── Gpu.kt, GpuCard.kt                       ← загрузка и частота видеочипа из /sys
-├── MainActivity.kt   ← экран, меню, поиск
-├── Ui.kt             ← цвета Material You, «стекло», фон, анимации
-├── CpuCard.kt, MemCard.kt, ChipsView.kt     ← карточки процессора, памяти и сводки
-├── ProcItemView.kt, SortBar.kt, AppIcons.kt ← список процессов карточками
-├── MetersView.kt     ← полоски ядер и памяти (режим таблицы htop)
-├── Table.kt, HeaderView.kt, ProcRowView.kt  ← таблица процессов
-├── ProcessDialog.kt  ← подробности и действия с процессом
-├── SettingsDialog.kt, Prefs.kt              ← настройки
-└── OverlayService.kt, OverlayView.kt        ← плавающий оверлей
+├── Shell.kt          ← persistent shell: sh, sh via Shizuku, or su
+├── ProcParser.kt     ← polling script and /proc parsing
+├── Sampler.kt        ← background polling thread shared by the screen and the overlay
+├── Model.kt          ← Snapshot, ProcInfo, sort orders
+├── Tree.kt           ← process tree (parents and children)
+├── History.kt, Chart.kt, ChartView.kt       ← sample history and charts (with time zoom)
+├── Battery.kt, BatteryCard.kt               ← battery current, power and estimate
+├── Gpu.kt, GpuCard.kt                       ← GPU load and frequency from /sys
+├── MainActivity.kt   ← screen, menu, search, table zoom
+├── Ui.kt             ← Material You colors, "glass", background, animations
+├── CpuCard.kt, MemCard.kt, ChipsView.kt     ← CPU, memory and summary cards
+├── ProcItemView.kt, SortBar.kt, AppIcons.kt ← card-style process list
+├── MetersView.kt     ← core and memory bars (htop table mode)
+├── Table.kt, HeaderView.kt, ProcRowView.kt  ← process table
+├── ProcessDialog.kt  ← process details and actions
+├── SettingsDialog.kt, Prefs.kt              ← settings
+└── OverlayService.kt, OverlayView.kt        ← floating overlay
 ```
 
-## Сборка
+## Building
 
 ```sh
 ./gradlew assembleDebug        # → app/build/outputs/apk/debug/app-debug.apk
-./gradlew testDebugUnitTest    # тесты разбора /proc
+./gradlew testDebugUnitTest    # /proc and GPU parsing tests
 ```
 
-Требуется JDK 17 и Android SDK (platform 35, build-tools 35.0.0). Единственная библиотека — [Shizuku API](https://github.com/RikkaApps/Shizuku-API) (Apache-2.0).
-Подробная инструкция по сборке на телефоне — в репозитории
-[cat-hunt](https://github.com/Xtratter/cat-hunt/blob/main/docs/GUIDE.md).
+You need JDK 17 and the Android SDK (platform 35, build-tools 35.0.0). The only library is the [Shizuku API](https://github.com/RikkaApps/Shizuku-API) (Apache-2.0).
+A step-by-step guide to building on a phone (in Russian) is in the
+[cat-hunt](https://github.com/Xtratter/cat-hunt/blob/main/docs/GUIDE.md) repository.
 
-## Лицензия
+## License
 
 [GPL-3.0-or-later](LICENSE)

@@ -61,7 +61,7 @@ object SettingsDialog {
         section(R.string.s_list)
         choice(R.string.s_interval, listOf(1000, 2000, 3000, 5000, 10000),
             { a.getString(R.string.seconds, it / 1000) }, { prefs.intervalMs }, { prefs.intervalMs = it })
-        choice(R.string.s_font, listOf(10, 11, 12, 13, 14, 16),
+        choice(R.string.s_font, listOf(8, 10, 11, 12, 13, 14, 16, 18, 20, 24),
             { "$it sp" }, { prefs.fontSp }, { prefs.fontSp = it })
         switch(R.string.view_table, { prefs.tableMode }, { prefs.tableMode = it })
         switch(R.string.s_kernel, { prefs.kernelThreads }, { prefs.kernelThreads = it })

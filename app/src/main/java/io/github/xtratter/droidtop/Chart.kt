@@ -8,6 +8,7 @@ import android.graphics.RectF
 import android.graphics.Shader
 import android.view.MotionEvent
 import android.view.View
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
@@ -25,6 +26,9 @@ class Chart(private val view: View) {
     var autoMax = false
     var color = Ui.primary
     var format: (Float) -> String = { Fmt.pct(it) + "%" }
+    /** Сколько точек может быть в серии — окно не шире этого. */
+    var capacity = History.SIZE
+    private val shown get() = span.coerceAtMost(capacity)
 
     private val line = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE; strokeWidth = dp(2f)
@@ -42,11 +46,22 @@ class Chart(private val view: View) {
     private val fill = Path()
     private var shaderFor = 0f
     private var touchX = -1f
+    private var pinchDist = 0f
+    private var pinchSpan = 0
+
+    companion object {
+        /** Сколько последних точек видно на графиках; общий для всех, меняется щипком. */
+        var span = 150
+        const val MIN_SPAN = 20
+    }
 
     fun draw(c: Canvas) {
-        val n = values.size
+        // видимое окно — последние span точек
+        val all = values.size
+        val from = (all - shown).coerceAtLeast(0)
+        val n = all - from
         val h = rect.height()
-        val top = maxY(n)
+        val top = maxY(from)
         for (f in floatArrayOf(0f, 0.5f, 1f)) {
             val y = rect.bottom - h * f
             c.drawLine(rect.left, y, rect.right, y, grid)
@@ -55,21 +70,23 @@ class Chart(private val view: View) {
         axisP.textAlign = Paint.Align.RIGHT
         c.drawText(format(top), rect.right, rect.top - dp(4f), axisP)
         axisP.textAlign = Paint.Align.LEFT
-        val minutes = (History.SIZE * History.secondsPerPoint / 60f).roundToInt().coerceAtLeast(1)
-        c.drawText(ctx.getString(R.string.ch_span, minutes), rect.left, rect.top - dp(4f), axisP)
+        val seconds = shown * History.secondsPerPoint
+        c.drawText(if (seconds < 90f) ctx.getString(R.string.ch_span_s, seconds.roundToInt())
+            else ctx.getString(R.string.ch_span, (seconds / 60f).roundToInt()), rect.left, rect.top - dp(4f), axisP)
 
         if (n < 2) {
             axisP.textAlign = Paint.Align.CENTER
             c.drawText(ctx.getString(R.string.ch_collecting), rect.centerX(), rect.centerY(), axisP)
             return
         }
-        val step = rect.width() / (History.SIZE - 1)
+        val step = rect.width() / (shown - 1)
         fun x(i: Int) = rect.right - (n - 1 - i) * step
         fun y(v: Float) = rect.bottom - h * (v / top).coerceIn(0f, 1f)
+        fun v(i: Int) = values[from + i]
 
         path.reset(); fill.reset()
-        path.moveTo(x(0), y(values[0]))
-        for (i in 1 until n) path.lineTo(x(i), y(values[i]))
+        path.moveTo(x(0), y(v(0)))
+        for (i in 1 until n) path.lineTo(x(i), y(v(i)))
         fill.set(path)
         fill.lineTo(x(n - 1), rect.bottom); fill.lineTo(x(0), rect.bottom); fill.close()
         if (shaderFor != rect.top + color) {
@@ -82,18 +99,18 @@ class Chart(private val view: View) {
         c.drawPath(path, line)
 
         // точка «сейчас»
-        dot.color = Ui.base; c.drawCircle(x(n - 1), y(values[n - 1]), dp(5f), dot)
-        dot.color = color; c.drawCircle(x(n - 1), y(values[n - 1]), dp(3.5f), dot)
+        dot.color = Ui.base; c.drawCircle(x(n - 1), y(v(n - 1)), dp(5f), dot)
+        dot.color = color; c.drawCircle(x(n - 1), y(v(n - 1)), dp(3.5f), dot)
 
-        if (touchX >= 0) {
+        if (touchX >= 0 && pinchDist == 0f) {
             val i = (n - 1 - ((rect.right - touchX) / step).roundToInt()).coerceIn(0, n - 1)
             val px = x(i)
-            val py = y(values[i])
+            val py = y(v(i))
             c.drawLine(px, rect.top, px, rect.bottom, cross)
             dot.color = Ui.base; c.drawCircle(px, py, dp(6f), dot)
             dot.color = color; c.drawCircle(px, py, dp(4f), dot)
             val ago = ((n - 1 - i) * History.secondsPerPoint).roundToInt()
-            val tip = format(values[i]) + " · " +
+            val tip = format(v(i)) + " · " +
                 if (ago == 0) ctx.getString(R.string.ch_now) else ctx.getString(R.string.ch_ago, Human.ago(ctx, ago))
             val tw = tipP.measureText(tip) + dp(20f)
             val th = dp(28f)
@@ -105,10 +122,10 @@ class Chart(private val view: View) {
         }
     }
 
-    private fun maxY(n: Int): Float {
+    private fun maxY(from: Int): Float {
         if (!autoMax) return maxY
         var m = maxY
-        for (i in 0 until n) if (values[i] * 1.15f > m) m = values[i] * 1.15f
+        for (i in from until values.size) if (values[i] * 1.15f > m) m = values[i] * 1.15f
         return niceCeil(m)
     }
 
@@ -117,19 +134,34 @@ class Chart(private val view: View) {
         return steps.firstOrNull { it >= v } ?: v
     }
 
-    /** Касание: true — событие наше (палец на графике). */
+    /** Касание: true — событие наше (палец на графике). Два пальца — зум по времени. */
     fun onTouch(e: MotionEvent): Boolean {
         when (e.actionMasked) {
+            MotionEvent.ACTION_POINTER_DOWN -> {
+                if (touchX < 0 || e.pointerCount != 2) return touchX >= 0
+                pinchDist = abs(e.getX(0) - e.getX(1)).coerceAtLeast(dp(16f))
+                pinchSpan = span
+            }
+            MotionEvent.ACTION_POINTER_UP -> if (touchX < 0) return false else pinchDist = 0f
             MotionEvent.ACTION_DOWN -> {
                 if (!rect.contains(e.x, e.y) && !(e.x in rect.left..rect.right && e.y in rect.top - dp(16f)..rect.bottom + dp(16f)))
                     return false
                 view.parent?.requestDisallowInterceptTouchEvent(true)
                 touchX = e.x.coerceIn(rect.left, rect.right)
             }
-            MotionEvent.ACTION_MOVE -> if (touchX >= 0) touchX = e.x.coerceIn(rect.left, rect.right) else return false
+            MotionEvent.ACTION_MOVE -> when {
+                touchX < 0 -> return false
+                pinchDist > 0f && e.pointerCount >= 2 -> {
+                    // пальцы разводим — окно короче (крупнее), сводим — длиннее
+                    val d = abs(e.getX(0) - e.getX(1)).coerceAtLeast(dp(16f))
+                    span = (pinchSpan * pinchDist / d).roundToInt().coerceIn(MIN_SPAN, History.SIZE)
+                }
+                pinchDist == 0f -> touchX = e.x.coerceIn(rect.left, rect.right)
+            }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 if (touchX < 0) return false
                 touchX = -1f
+                pinchDist = 0f
                 view.parent?.requestDisallowInterceptTouchEvent(false)
             }
         }

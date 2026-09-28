@@ -149,4 +149,5 @@
     <string name="c_gpu_freq">%1$d / %2$d МГц</string>
     <string name="c_gpu_freq_only">Частота от максимальной · загрузка — только с root</string>
     <string name="u_mhz">МГц</string>
+    <string name="ch_span_s">за %1$d с</string>
 </resources>

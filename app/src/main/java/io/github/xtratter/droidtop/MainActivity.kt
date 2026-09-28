@@ -13,6 +13,8 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.text.method.LinkMovementMethod
 import android.view.Gravity
+import android.view.MotionEvent
+import android.view.ScaleGestureDetector
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
@@ -244,6 +246,49 @@ class MainActivity : Activity(), Sampler.Listener {
         }
         add(header, 0f)
         list.addHeaderView(box, null, false)
+    }
+
+    // щипок двумя пальцами в таблице htop меняет размер шрифта таблицы и «метров»
+    private var zooming = false
+    private val zoom by lazy {
+        ScaleGestureDetector(this, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+            private var startFont = 12
+            private var factor = 1f
+
+            override fun onScaleBegin(d: ScaleGestureDetector): Boolean {
+                startFont = prefs.fontSp; factor = 1f; zooming = true
+                return true
+            }
+
+            override fun onScale(d: ScaleGestureDetector): Boolean {
+                factor *= d.scaleFactor
+                val f = Math.round(startFont * factor).coerceIn(Prefs.MIN_FONT, Prefs.MAX_FONT)
+                if (f != prefs.fontSp) setFont(f)
+                return true
+            }
+        })
+    }
+
+    override fun dispatchTouchEvent(e: MotionEvent): Boolean {
+        if (!prefs.tableMode) return super.dispatchTouchEvent(e)
+        zoom.onTouchEvent(e)
+        if (!zooming) return super.dispatchTouchEvent(e)
+        // пока идёт зум, список не прокручивается и строки не нажимаются
+        if (e.actionMasked == MotionEvent.ACTION_POINTER_DOWN || zoom.isInProgress) {
+            val cancel = MotionEvent.obtain(e).apply { action = MotionEvent.ACTION_CANCEL }
+            super.dispatchTouchEvent(cancel)
+            cancel.recycle()
+        }
+        if (e.actionMasked == MotionEvent.ACTION_UP || e.actionMasked == MotionEvent.ACTION_CANCEL) zooming = false
+        return true
+    }
+
+    private fun setFont(sp: Int) {
+        prefs.fontSp = sp
+        table.setFont(sp)
+        meters.setFont(sp)
+        header.requestLayout()
+        list.invalidateViews()
     }
 
     /** Применить настройки после изменения. */

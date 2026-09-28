@@ -20,6 +20,11 @@ class Prefs(ctx: Context) {
     var kernelThreads by bool("kernel_threads", false)
     var appLabels by bool("app_labels", true)
     var fontSp by int("font_sp", 12)
+
+    companion object {
+        const val MIN_FONT = 7
+        const val MAX_FONT = 28
+    }
     var sort by str("sort", Sort.CPU.name)
     var sortAsc by bool("sort_asc", false)
 

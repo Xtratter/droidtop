@@ -1,0 +1,1 @@
+Pinch to zoom in the htop table (font size) and on charts (from 40 seconds to 20 minutes); charts keep 20 minutes of history.

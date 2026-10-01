@@ -1,5 +1,7 @@
 # 📊 DroidTop
 
+[![Build](https://github.com/Xtratter/droidtop/actions/workflows/build.yml/badge.svg)](https://github.com/Xtratter/droidtop/actions/workflows/build.yml)
+
 [Русский](README.ru.md) · **English**
 
 A process and resource monitor for Android inspired by **htop**: which processes are running,

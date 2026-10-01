@@ -1,0 +1,1 @@
+Material 3 Expressive from the shared android-ui-kit, the same as in AppShelf; no light frame inside dialogs.

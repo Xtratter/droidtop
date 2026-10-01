@@ -1,0 +1,1 @@
+Material 3 Expressive из общего набора android-ui-kit, как в AppShelf; без светлой рамки внутри окон.

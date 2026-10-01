@@ -2,6 +2,10 @@
 
 [Русский](CHANGELOG.ru.md) · **English**
 
+## 1.12.1 — 2026-10-01
+
+- Material 3 Expressive (colour scheme, themes, surfaces, windows) now comes from the shared [android-ui-kit](https://github.com/Xtratter/android-ui-kit) 1.1, the same as in AppShelf; dialogs no longer blur a rectangle under the window (no light frame inside)
+
 ## 1.12 — 2026-10-01
 
 - **Themes like in AppShelf**: Material 3 Expressive tonal surfaces instead of glass highlights; the list is now Follow system (the default for new installs), Light, Dark (the former Standard), Graphite, AMOLED and Classic htop; in AMOLED, accent buttons are black with an outline

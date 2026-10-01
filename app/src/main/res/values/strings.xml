@@ -295,4 +295,15 @@
     <string name="sum_top">Top %1$d by CPU (PID, CPU, RES, name):</string>
     <string name="dev_kernel_build">Kernel build</string>
     <string name="th_toast">Theme: %1$s</string>
+    <string name="s_haptics">Vibration</string>
+    <string name="hap_off">Off</string>
+    <string name="hap_light">Light</string>
+    <string name="hap_medium">Medium</string>
+    <string name="hap_strong">Strong</string>
+    <string name="h_search">Filter processes by name, package or PID.</string>
+    <string name="h_pause">Freeze the list and meters to read them calmly; tap again to continue.</string>
+    <string name="h_overlay">A small floating window with CPU, memory and top processes over other apps.</string>
+    <string name="h_more">Menu: device info, copy summary, settings, access mode and more.</string>
+    <string name="h_mode_t">Access mode</string>
+    <string name="h_mode">How DroidTop reads processes: as an app (only its own), via Shizuku or with root (everything). Tap to change.</string>
 </resources>

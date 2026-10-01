@@ -294,4 +294,15 @@
     <string name="sum_top">Топ-%1$d по CPU (PID, CPU, RES, имя):</string>
     <string name="dev_kernel_build">Сборка ядра</string>
     <string name="th_toast">Тема: %1$s</string>
+    <string name="s_haptics">Вибрация</string>
+    <string name="hap_off">Выключена</string>
+    <string name="hap_light">Лёгкая</string>
+    <string name="hap_medium">Средняя</string>
+    <string name="hap_strong">Сильная</string>
+    <string name="h_search">Фильтр процессов по имени, пакету или PID.</string>
+    <string name="h_pause">Заморозить список и показатели, чтобы спокойно рассмотреть; нажмите ещё раз — продолжить.</string>
+    <string name="h_overlay">Маленькое плавающее окно с процессором, памятью и главными процессами поверх других приложений.</string>
+    <string name="h_more">Меню: об устройстве, копирование сводки, настройки, режим доступа и другое.</string>
+    <string name="h_mode_t">Режим доступа</string>
+    <string name="h_mode">Как DroidTop видит процессы: как приложение (только свои), через Shizuku или с root (все). Нажмите, чтобы сменить.</string>
 </resources>

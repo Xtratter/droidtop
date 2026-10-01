@@ -1,5 +1,7 @@
 package io.github.xtratter.droidtop
 
+import io.github.xtratter.uikit.EdgeBlur
+import io.github.xtratter.uikit.Haptics
 import android.animation.ValueAnimator
 import android.app.AlertDialog
 import android.content.Context
@@ -240,6 +242,12 @@ object Ui {
         w.setDimAmount(0.35f)
         listOf(AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE, AlertDialog.BUTTON_NEUTRAL)
             .forEach { d.getButton(it)?.setTextColor(primary) }
+        Haptics.attachAll(w.decorView)   // щелчки при нажатии на кнопки и пункты окна
+        // у краёв прокручиваемого содержимого окна — плавное размытие и растворение вместо резкого среза
+        w.decorView.post {
+            val scroller = EdgeBlur.findScrollable(w.decorView) ?: return@post
+            EdgeBlur.wrap(scroller, 40f, 0, 0)?.dissolve = true
+        }
     }
 }
 

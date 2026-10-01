@@ -1,5 +1,8 @@
 package io.github.xtratter.droidtop
 
+import io.github.xtratter.uikit.EdgeBlur
+import io.github.xtratter.uikit.Haptics
+import io.github.xtratter.uikit.Help
 import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
@@ -46,6 +49,7 @@ class MainActivity : Activity(), Sampler.Listener {
     private lateinit var searchBox: View
     private lateinit var searchField: EditText
     private lateinit var topScrim: View
+    private lateinit var edges: EdgeBlur
     private var shownAccess: Access? = null
     private var shownHint = -1
     /** Свёрнутые ветки дерева (PID). */
@@ -83,6 +87,9 @@ class MainActivity : Activity(), Sampler.Listener {
         super.onCreate(savedInstanceState)
         Ui.forgetDialogs()
         Sampler.init(this)
+        // общие файлы android-ui-kit: вибрация (настройка — в «Настройках»), справка по удержанию
+        Haptics.init(this, getSharedPreferences("prefs", MODE_PRIVATE))
+        Help.style = { Help.Style(Ui.mix(Ui.surface, Ui.primary, 0.14f), Ui.withAlpha(Ui.primary, 0.4f), Ui.primary, Ui.TEXT) }
         setupWindow()
         setContentView(R.layout.activity_main)
         table = Table(this).apply { cmdTitle = getString(R.string.col_command) }
@@ -108,6 +115,10 @@ class MainActivity : Activity(), Sampler.Listener {
         setupInsets()
 
         list.adapter = adapter
+        // мягкие края: список размывается под панелью и у нижнего края (вместо затемнения сверху)
+        edges = EdgeBlur.wrap(list, 0f, Ui.withAlpha(Ui.base, 0.55f), Ui.withAlpha(Ui.base, 0.35f))!!
+        edges.alwaysTop = true; edges.alwaysBottom = true
+        topScrim.visibility = View.GONE
         list.setOnItemClickListener { parent, view, pos, _ ->
             val r = parent.getItemAtPosition(pos) as? Row ?: return@setOnItemClickListener
             // в дереве нажатие по значку сворачивает / раскрывает ветку
@@ -115,6 +126,7 @@ class MainActivity : Activity(), Sampler.Listener {
                 toggleBranch(r.p.pid)
                 return@setOnItemClickListener
             }
+            Haptics.play(Haptics.Kind.TAP)
             openProcess(r.p)
         }
         list.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
@@ -186,6 +198,10 @@ class MainActivity : Activity(), Sampler.Listener {
     }
 
     private fun updateListPadding() {
+        edges.topBand = topBar.height + dp(40f)
+        edges.topRamp = dp(56f)
+        edges.bottomBand = insetBottom + dp(48f)
+        edges.invalidate()
         val scrimH = topBar.height + dp(28f)
         if (topScrim.layoutParams.height != scrimH) topScrim.post {
             topScrim.layoutParams = topScrim.layoutParams.apply { height = scrimH }
@@ -219,6 +235,16 @@ class MainActivity : Activity(), Sampler.Listener {
         }
         findViewById<View>(R.id.btnMore).setOnClickListener { showMenu(it) }
         modeChip.setOnClickListener { showAccessDialog() }
+        // щелчок при нажатии и справка по удержанию
+        for ((id, title, text) in listOf(
+            Triple(R.id.btnSearch, R.string.search, R.string.h_search),
+            Triple(R.id.btnPause, R.string.pause, R.string.h_pause),
+            Triple(R.id.btnOverlay, R.string.overlay, R.string.h_overlay),
+            Triple(R.id.btnMore, R.string.settings, R.string.h_more),
+            Triple(R.id.modeChip, R.string.h_mode_t, R.string.h_mode),
+        )) findViewById<View>(id).let { Haptics.onClick(it); Help.attach(it, title, text) }
+        Haptics.onClick(findViewById(R.id.title), Haptics.Kind.TICK)
+        Haptics.onClick(findViewById(R.id.btnSearchClose))
         searchField.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
             override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}

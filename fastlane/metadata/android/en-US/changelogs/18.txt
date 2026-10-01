@@ -1,0 +1,1 @@
+Soft blurred edges like in Telegram, vibration on taps (Settings → Vibration), long-press help on top-bar buttons.

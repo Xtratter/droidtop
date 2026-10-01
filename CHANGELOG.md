@@ -2,6 +2,13 @@
 
 [Русский](CHANGELOG.ru.md) · **English**
 
+## 1.11 — 2026-10-01
+
+- **Soft blurred edges**: the process list blurs smoothly under the top bar and at the bottom edge, like in Telegram (instead of the dark shade); in dialogs the scrolling content dissolves at the edges
+- **Vibration**: a crisp click on buttons, menu items and processes; strength in Settings → Vibration (off, light, medium, strong)
+- **Long-press help**: hold a finger on a top-bar button or the access-mode chip to see what it does
+- These parts now come from the shared [android-ui-kit](https://github.com/Xtratter/android-ui-kit)
+
 ## 1.10 — 2026-09-28
 
 - **Quick theme switch**: tap the DroidTop title in the top bar to switch to the next theme (standard → system → AMOLED → light → graphite → classic htop → standard), long-press it to go back to the standard theme; a short hint shows the theme name

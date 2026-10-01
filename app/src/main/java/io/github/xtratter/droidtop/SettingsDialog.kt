@@ -1,5 +1,6 @@
 package io.github.xtratter.droidtop
 
+import io.github.xtratter.uikit.Haptics
 import android.app.AlertDialog
 import android.view.Gravity
 import android.widget.LinearLayout
@@ -98,6 +99,11 @@ object SettingsDialog {
             { themes.indexOf(prefs.theme()) }, { i ->
                 if (themes[i] != prefs.theme()) { self?.dismiss(); a.changeTheme(themes[i]) }
             })
+
+        val levels = Haptics.Level.entries
+        val levelNames = listOf(R.string.hap_off, R.string.hap_light, R.string.hap_medium, R.string.hap_strong)
+        choice(R.string.s_haptics, levels.indices.toList(), { a.getString(levelNames[it]) },
+            { Haptics.level().ordinal }, { i -> Haptics.setLevel(levels[i]); Haptics.play(Haptics.Kind.SUCCESS) })
 
         section(R.string.s_list)
         choice(R.string.s_interval, listOf(1000, 2000, 3000, 5000, 10000),

@@ -42,6 +42,36 @@ object Ui {
     /** Цвета пятен фона и их яркость. */
     var auroraColors = intArrayOf(primary, tertiary, secondary); private set
     var auroraStrength = 1f; private set
+    /** Material 3 Expressive (как в AppShelf): тональные поверхности вместо стекла с бликом. */
+    const val EXPRESSIVE = true
+    /** Прозрачность интерфейса (настройка в окне «Тема»): тональные поверхности слегка прозрачны. */
+    var translucent = true; private set
+    /** Насколько плотные поверхности (1 — непрозрачные). */
+    private const val SURFACE_ALPHA = 0.8f
+    /** Тональные цвета M3: контейнеры акцента и поверхности. */
+    var primaryContainer = 0; private set
+    var onPrimaryContainer = 0; private set
+    var surfaceContainer = 0; private set
+    var surfaceContainerHigh = 0; private set
+    /** AMOLED: кнопки не цветные, а чёрные с окантовкой. */
+    var amoled = false; private set
+
+    private fun tonal() {
+        val white = 0xFFFFFFFF.toInt(); val black = 0xFF000000.toInt()
+        if (light) {
+            primaryContainer = mix(white, primary, 0.22f); onPrimaryContainer = mix(primary, black, 0.55f)
+            surfaceContainer = mix(base, white, 0.55f); surfaceContainerHigh = mix(base, white, 0.85f)
+        } else {
+            primaryContainer = mix(base, primary, 0.36f); onPrimaryContainer = mix(primary, white, 0.7f)
+            surfaceContainer = mix(base, white, 0.07f); surfaceContainerHigh = mix(base, white, 0.12f)
+        }
+        if (translucent) {
+            // лёгкая прозрачность: цветные пятна фона мягко просвечивают сквозь карточки, панель и окна
+            surfaceContainer = withAlpha(surfaceContainer, SURFACE_ALPHA)
+            surfaceContainerHigh = withAlpha(surfaceContainerHigh, SURFACE_ALPHA + 0.08f)
+            primaryContainer = withAlpha(primaryContainer, SURFACE_ALPHA + 0.04f)
+        }
+    }
 
     var TEXT = 0xFFF2F2F6.toInt(); private set
     var TEXT2 = 0xB3F2F2F6.toInt(); private set
@@ -87,7 +117,8 @@ object Ui {
     }
 
     /** Применена ли уже тема [t] (с учётом системного режима). */
-    fun isCurrent(ctx: Context, t: Theme) = theme == t && (t != Theme.SYSTEM || nightNow(ctx) == night)
+    fun isCurrent(ctx: Context, t: Theme) = theme == t && (t != Theme.SYSTEM || nightNow(ctx) == night) &&
+        translucent == Prefs(ctx).translucent
 
     private fun nightNow(ctx: Context) = resolve(ctx, Theme.SYSTEM) != Theme.LIGHT
 
@@ -99,6 +130,8 @@ object Ui {
         fun c(id: Int) = ctx.getColor(id)
         light = r == Theme.LIGHT
         Palette.apply(light)
+        translucent = Prefs(ctx).translucent
+        amoled = r == Theme.AMOLED
         if (light) {
             primary = if (you) c(android.R.color.system_accent1_600) else 0xFF3B5BA9.toInt()
             secondary = if (you) c(android.R.color.system_accent2_600) else 0xFF565E71.toInt()
@@ -117,6 +150,7 @@ object Ui {
             dialogBlur = 0xC8F7F8FC.toInt(); dialogSolid = 0xFAF7F8FC.toInt()
             surface = 0xFFF7F8FC.toInt()
             hintFill = 0x33FFB300; hintText = 0xFF6D4C00.toInt()
+            tonal()
             return
         }
         // тёмные темы
@@ -133,6 +167,7 @@ object Ui {
         auroraStrength = 1f
         when (r) {
             Theme.AMOLED -> {
+                ON_ACCENT = TEXT   // кнопки чёрные — текст на них светлый
                 base = 0xFF000000.toInt()
                 card = 0x0DFFFFFF
                 dialogBlur = 0xE6000000.toInt(); dialogSolid = 0xFA050505.toInt()
@@ -161,6 +196,7 @@ object Ui {
             }
         }
         auroraColors = intArrayOf(primary, tertiary, secondary)
+        tonal()
     }
 
     /** Цвет по нагрузке: спокойно — акцент, заметно — янтарь, много — красный. */
@@ -203,10 +239,31 @@ object Ui {
             InsetDrawable(mask, insetH.toInt(), insetV.toInt(), insetH.toInt(), insetV.toInt()))
     }
 
-    fun pill(ctx: Context, fill: Int, stroke: Int = 0, radiusDp: Float = 100f) = GradientDrawable().apply {
-        cornerRadius = dp(ctx, radiusDp)
-        setColor(fill)
-        if (stroke != 0) setStroke(dp(ctx, 1f).toInt().coerceAtLeast(1), stroke)
+    fun pill(ctx: Context, fill: Int, stroke: Int = 0, radiusDp: Float = 100f): Drawable {
+        // AMOLED: залитая акцентом кнопка — чёрная с окантовкой (текст на ней — светлый, см. ON_ACCENT)
+        val black = amoled && fill == primary
+        val f = if (black) 0xFF000000.toInt() else fill
+        val s = if (black) ink(0x73) else stroke
+        return GradientDrawable().apply {
+            cornerRadius = dp(ctx, radiusDp)
+            setColor(f)
+            if (s != 0) setStroke(dp(ctx, 1f).toInt().coerceAtLeast(1), s)
+        }
+    }
+
+    /** Убрать фон у служебных панелей диалога и у рамок между окном и содержимым (наше содержимое не трогаем). */
+    private fun clearPanels(decor: View) {
+        val res = decor.resources
+        for (name in listOf("parentPanel", "topPanel", "title_template", "contentPanel", "scrollView",
+            "customPanel", "custom", "buttonPanel")) {
+            val id = res.getIdentifier(name, "id", "android")
+            if (id != 0) decor.findViewById<View>(id)?.background = null
+        }
+        var v: View? = decor.findViewById<View>(android.R.id.content)
+        while (v != null && v !== decor) {
+            v.background = null
+            v = v.parent as? View
+        }
     }
 
     private val dialogs = HashSet<View>()
@@ -240,6 +297,9 @@ object Ui {
             w.attributes = w.attributes.apply { blurBehindRadius = dp(ctx, 10f).toInt() }
         }
         w.setDimAmount(0.35f)
+        // полупрозрачная поверхность: системная тень и подложки панелей диалога просвечивали «рамкой»
+        w.setElevation(0f)
+        clearPanels(w.decorView)
         listOf(AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE, AlertDialog.BUTTON_NEUTRAL)
             .forEach { d.getButton(it)?.setTextColor(primary) }
         Haptics.attachAll(w.decorView)   // щелчки при нажатии на кнопки и пункты окна
@@ -255,7 +315,9 @@ object Ui {
  * «Жидкое стекло»: полупрозрачная заливка, мягкий блик сверху и светлая кромка,
  * которая ярче в верхнем левом углу — как свет на гранях стекла.
  */
-class GlassDrawable(ctx: Context, radiusDp: Float, private val fill: Int = Ui.card) : Drawable() {
+class GlassDrawable(ctx: Context, radiusDp: Float, private val fill: Int = Ui.card,
+                    /** false — заливка как задана (оверлей: прозрачность из его настроек). */
+                    private val tonal: Boolean = true) : Drawable() {
     private val radius = Ui.dp(ctx, radiusDp)
     private val d = ctx.resources.displayMetrics.density
     private val fillP = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = fill }
@@ -276,12 +338,22 @@ class GlassDrawable(ctx: Context, radiusDp: Float, private val fill: Int = Ui.ca
     }
 
     override fun draw(c: Canvas) {
+        if (Ui.EXPRESSIVE && tonal) {
+            // M3 Expressive: ровная тональная поверхность без блика и кромки
+            fillP.color = when {
+                fill == Ui.card -> Ui.surfaceContainer
+                (fill ushr 24) >= 0x80 -> Ui.surfaceContainerHigh
+                else -> fill
+            }
+            c.drawRoundRect(r, radius, radius, fillP)
+            return
+        }
         c.drawRoundRect(r, radius, radius, fillP)
         c.drawRoundRect(r, radius, radius, hiP)
         c.drawRoundRect(r, radius, radius, edgeP)
     }
 
-    override fun getOutline(outline: Outline) = outline.setRoundRect(bounds, radius)
+    override fun getOutline(outline: Outline) = outline.setRoundRect(bounds, minOf(radius, bounds.height() / 2f, bounds.width() / 2f))
     override fun setAlpha(alpha: Int) {}
     override fun setColorFilter(colorFilter: ColorFilter?) {}
     @Deprecated("Deprecated in Java")

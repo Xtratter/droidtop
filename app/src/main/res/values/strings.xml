@@ -72,8 +72,8 @@
     <string name="s_labels">App names instead of package names</string>
     <string name="s_appearance">Appearance</string>
     <string name="s_theme">Theme</string>
-    <string name="th_standard">Standard</string>
-    <string name="th_system">Follow system (standard / light)</string>
+    <string name="th_standard">Dark</string>
+    <string name="th_system">Follow system (dark / light)</string>
     <string name="th_amoled">AMOLED black</string>
     <string name="th_light">Light</string>
     <string name="th_graphite">Graphite</string>
@@ -306,4 +306,5 @@
     <string name="h_more">Menu: device info, copy summary, settings, access mode and more.</string>
     <string name="h_mode_t">Access mode</string>
     <string name="h_mode">How DroidTop reads processes: as an app (only its own), via Shizuku or with root (everything). Tap to change.</string>
+    <string name="translucency">Transparency</string>
 </resources>

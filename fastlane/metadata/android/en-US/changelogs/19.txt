@@ -1,0 +1,1 @@
+Themes like in AppShelf: Material 3 Expressive, follow system by default, Dark/Light/Graphite/AMOLED/htop, Transparency switch, applied at once.

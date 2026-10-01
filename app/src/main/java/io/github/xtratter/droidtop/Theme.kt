@@ -1,11 +1,19 @@
 package io.github.xtratter.droidtop
 
-/** Тема оформления. [SYSTEM] — стандартная тёмная или светлая, как в настройках Android. */
+/**
+ * Тема оформления, в порядке списка в окне «Тема» (как в AppShelf). [SYSTEM] — тёмная или светлая, как в настройках
+ * Android; [STANDARD] — тёмная (имя в настройках прежнее, чтобы выбранная тема сохранилась); [HTOP] — своя для DroidTop.
+ */
 enum class Theme(val title: Int) {
-    STANDARD(R.string.th_standard),
     SYSTEM(R.string.th_system),
-    AMOLED(R.string.th_amoled),
     LIGHT(R.string.th_light),
+    STANDARD(R.string.th_standard),
     GRAPHITE(R.string.th_graphite),
-    HTOP(R.string.th_htop),
+    AMOLED(R.string.th_amoled),
+    HTOP(R.string.th_htop);
+
+    companion object {
+        /** Тема по умолчанию — тёмная или светлая, как в настройках Android. */
+        val DEFAULT: Theme get() = SYSTEM
+    }
 }

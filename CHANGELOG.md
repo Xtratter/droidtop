@@ -2,6 +2,11 @@
 
 [Русский](CHANGELOG.ru.md) · **English**
 
+## 1.12 — 2026-10-01
+
+- **Themes like in AppShelf**: Material 3 Expressive tonal surfaces instead of glass highlights; the list is now Follow system (the default for new installs), Light, Dark (the former Standard), Graphite, AMOLED and Classic htop; in AMOLED, accent buttons are black with an outline
+- **Theme window** (⋮ → Settings → Theme): pick a theme or switch **Transparency** — applied at once, the window stays open and the screen does not blink; tapping the title also switches themes in place, long-press returns to Follow system
+
 ## 1.11 — 2026-10-01
 
 - **Soft blurred edges**: the process list blurs smoothly under the top bar and at the bottom edge, like in Telegram (instead of the dark shade); in dialogs the scrolling content dissolves at the edges

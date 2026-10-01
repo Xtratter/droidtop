@@ -102,7 +102,7 @@ class OverlayView(ctx: Context, private val scale: Float, widthDp: Int) : View(c
     }
 
     override fun onDraw(c: Canvas) {
-        val g = glass ?: GlassDrawable(context, 22f * scale, Ui.withAlpha(Ui.surface, bgAlpha)).also {
+        val g = glass ?: GlassDrawable(context, 22f * scale, Ui.withAlpha(Ui.surface, bgAlpha), tonal = false).also {
             it.setBounds(0, 0, width, height); glass = it
         }
         g.draw(c)

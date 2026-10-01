@@ -90,6 +90,14 @@ class MainActivity : Activity(), Sampler.Listener {
         // общие файлы android-ui-kit: вибрация (настройка — в «Настройках»), справка по удержанию
         Haptics.init(this, getSharedPreferences("prefs", MODE_PRIVATE))
         Help.style = { Help.Style(Ui.mix(Ui.surface, Ui.primary, 0.14f), Ui.withAlpha(Ui.primary, 0.4f), Ui.primary, Ui.TEXT) }
+        buildUi()
+    }
+
+    /**
+     * Весь экран — заново, в цветах текущей темы. При смене темы вызывается на месте, без recreate():
+     * окно «Тема» не закрывается и экран не мигает.
+     */
+    private fun buildUi() {
         setupWindow()
         setContentView(R.layout.activity_main)
         table = Table(this).apply { cmdTitle = getString(R.string.col_command) }
@@ -133,7 +141,11 @@ class MainActivity : Activity(), Sampler.Listener {
             if (table.layout(v.width - dp(24f))) { header.invalidate(); list.invalidateViews() }
         }
         applyPrefs()
+        shownAccess = null; shownHint = -1
+        updateButtons()
+        render(force = true)
     }
+
 
     /** Рисуем под системными панелями (edge-to-edge) — на любой версии Android одинаково. */
     @Suppress("DEPRECATION")
@@ -170,12 +182,87 @@ class MainActivity : Activity(), Sampler.Listener {
         if (t != prefs.theme()) changeTheme(t)
     }
 
-    /** Сменить тему: пересоздаём экран и оверлей с новыми цветами. */
-    fun changeTheme(t: Theme) {
-        prefs.theme = t.name
-        Ui.apply(this, t)
+    /** Сменить тему на месте: экран и оверлей перестраиваются в новых цветах, без пересоздания окна. */
+    fun changeTheme(t: Theme) = applyThemeInPlace { prefs.theme = t.name }
+
+    private fun applyThemeInPlace(change: () -> Unit) {
+        change()
+        Ui.apply(this, prefs.theme())
+        setTheme(if (Ui.light) R.style.AppTheme_Light else R.style.AppTheme)
+        buildUi()
+        window.decorView.requestApplyInsets()   // новые виды получают отступы под строку состояния и панель
         OverlayService.instance?.rebuild()
-        recreate()
+    }
+
+    /** Окно «Тема»: список тем и «Прозрачность»; всё меняется сразу, окно не закрывается и перекрашивается. */
+    fun themeDialog() {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20f), dp(18f), dp(20f), 0)
+        }
+        val dialog = AlertDialog.Builder(this)
+            .setView(android.widget.ScrollView(this).apply { addView(box) })
+            .setNegativeButton(R.string.close, null)
+            .create()
+        fillThemeBox(dialog, box)
+        dialog.show()
+        Ui.glassDialog(dialog)
+    }
+
+    private fun fillThemeBox(dialog: AlertDialog, box: LinearLayout) {
+        box.removeAllViews()
+        val tint = android.content.res.ColorStateList.valueOf(Ui.primary)
+        fun recolor() {
+            val blur = Build.VERSION.SDK_INT >= 31 && getSystemService(android.view.WindowManager::class.java).isCrossWindowBlurEnabled
+            dialog.window?.setBackgroundDrawable(GlassDrawable(this, 28f, if (blur) Ui.dialogBlur else Ui.dialogSolid))
+            listOf(AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE, AlertDialog.BUTTON_NEUTRAL)
+                .forEach { dialog.getButton(it)?.setTextColor(Ui.primary) }
+            fillThemeBox(dialog, box)
+        }
+        box.addView(TextView(this).apply {
+            setText(R.string.s_theme); textSize = 20f; typeface = Ui.medium; setTextColor(Ui.TEXT)
+            setPadding(dp(4f), 0, 0, dp(8f))
+        })
+        val group = android.widget.RadioGroup(this)
+        for (t in Theme.entries) group.addView(android.widget.RadioButton(this).apply {
+            id = View.generateViewId()
+            setText(t.title); textSize = 16f; setTextColor(Ui.TEXT); buttonTintList = tint
+            minHeight = dp(48f)
+            isChecked = t == prefs.theme()
+            setOnClickListener {
+                if (t == prefs.theme()) return@setOnClickListener
+                Haptics.play(Haptics.Kind.TICK)
+                applyThemeInPlace { prefs.theme = t.name }
+                recolor()
+            }
+        })
+        box.addView(group)
+        // прозрачность всего интерфейса — отдельно от цветов темы
+        box.addView(View(this).apply { setBackgroundColor(Ui.ink(0x22)) },
+            LinearLayout.LayoutParams(-1, dp(1f)).apply { topMargin = dp(8f); bottomMargin = dp(4f) })
+        box.addView(LinearLayout(this).apply {
+            gravity = Gravity.CENTER_VERTICAL
+            minimumHeight = dp(52f)
+            background = Ui.ripple(this@MainActivity, 16f)
+            addView(TextView(this@MainActivity).apply {
+                setText(R.string.translucency); textSize = 16f; setTextColor(Ui.TEXT)
+            }, LinearLayout.LayoutParams(0, -2, 1f))
+            val sw = android.widget.Switch(this@MainActivity).apply {
+                isChecked = prefs.translucent
+                isClickable = false
+                thumbTintList = android.content.res.ColorStateList(
+                    arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()), intArrayOf(Ui.primary, Ui.TEXT3))
+                trackTintList = android.content.res.ColorStateList(
+                    arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()), intArrayOf(Ui.withAlpha(Ui.primary, 0.5f), Ui.ink(0x33)))
+            }
+            addView(sw)
+            setOnClickListener {
+                sw.isChecked = !sw.isChecked
+                Haptics.play(Haptics.Kind.TICK)
+                applyThemeInPlace { prefs.translucent = sw.isChecked }
+                recolor()
+            }
+        }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(6f) })
     }
 
     @Suppress("DEPRECATION")
@@ -220,7 +307,7 @@ class MainActivity : Activity(), Sampler.Listener {
         // нажатие на название — следующая тема по кругу, удержание — тема по умолчанию
         findViewById<TextView>(R.id.title).apply {
             setOnClickListener { val all = Theme.entries; switchTheme(all[(prefs.theme().ordinal + 1) % all.size]) }
-            setOnLongClickListener { switchTheme(Theme.STANDARD); true }
+            setOnLongClickListener { switchTheme(Theme.DEFAULT); true }
         }
         findViewById<View>(R.id.btnSearch).setOnClickListener { showSearch(searchBox.visibility != View.VISIBLE) }
         findViewById<View>(R.id.btnSearchClose).setOnClickListener { showSearch(false) }
@@ -413,8 +500,9 @@ class MainActivity : Activity(), Sampler.Listener {
         if (!paused) render()
     }
 
-    private fun render() {
-        if (Ui.openDialogs > 0) return      // догоним, когда диалог закроется
+    /** [force] — и под открытым окном (после перестройки экрана в новой теме он иначе остался бы пустым). */
+    private fun render(force: Boolean = false) {
+        if (Ui.openDialogs > 0 && !force) return      // догоним, когда диалог закроется
         val s = snapshot ?: return
         // текст и фон меняем только при изменении: любой setText в шапке списка перераскладывает весь список
         if (shownAccess != s.access) {

@@ -20,9 +20,9 @@ Ready-made APKs are on the [Releases](https://github.com/Xtratter/droidtop/relea
 
 ## Features
 
-- **Material 3 "liquid glass" design**: translucent cards on a soft colored background, colors follow
+- **Material 3 Expressive design**: tonal cards on a soft colored background, colors follow
   the wallpaper (Android 12+), smooth animations. If you prefer the classic look, there is an htop table mode (⋮ → Settings)
-- **Themes**: standard, follow system, AMOLED black, light, graphite and classic htop (⋮ → Settings → Theme); tap the DroidTop title to switch to the next theme, long-press it to go back to the standard one
+- **Themes** (same as in AppShelf): follow system (default), light, dark, graphite, AMOLED black and classic htop, with an optional Transparency switch (⋮ → Settings → Theme, applied at once); tap the DroidTop title to switch to the next theme, long-press it to go back to follow system
 - **Soft blurred edges, vibration and long-press help** (shared [android-ui-kit](https://github.com/Xtratter/android-ui-kit)); vibration strength in Settings
 - **Pinch to zoom in the htop table**: spread or pinch two fingers to make the table and meters text bigger
   or smaller (the size is remembered and can also be picked in the settings)

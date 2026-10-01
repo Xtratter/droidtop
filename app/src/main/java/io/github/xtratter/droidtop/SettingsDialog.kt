@@ -94,11 +94,15 @@ object SettingsDialog {
         }
 
         section(R.string.s_appearance)
-        val themes = Theme.values().toList()
-        choice(R.string.s_theme, themes.indices.toList(), { a.getString(themes[it].title) },
-            { themes.indexOf(prefs.theme()) }, { i ->
-                if (themes[i] != prefs.theme()) { self?.dismiss(); a.changeTheme(themes[i]) }
-            })
+        // тема — своё окно, как в AppShelf: меняется на месте, вместе с «Прозрачностью»
+        box.addView(TextView(a).apply {
+            text = a.getString(R.string.s_theme) + ": " + a.getString(prefs.theme().title)
+            textSize = 16f
+            minHeight = (48 * dp).toInt()
+            gravity = Gravity.CENTER_VERTICAL
+            setTextColor(Ui.TEXT)
+            setOnClickListener { self?.dismiss(); a.themeDialog() }
+        })
 
         val levels = Haptics.Level.entries
         val levelNames = listOf(R.string.hap_off, R.string.hap_light, R.string.hap_medium, R.string.hap_strong)

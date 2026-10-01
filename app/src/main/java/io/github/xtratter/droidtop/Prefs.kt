@@ -28,8 +28,10 @@ class Prefs(ctx: Context) {
     var sort by str("sort", Sort.CPU.name)
     var sortAsc by bool("sort_asc", false)
 
-    var theme by str("theme", Theme.STANDARD.name)
-    fun theme(): Theme = runCatching { Theme.valueOf(theme) }.getOrDefault(Theme.STANDARD)
+    var theme by str("theme", Theme.DEFAULT.name)
+    fun theme(): Theme = runCatching { Theme.valueOf(theme) }.getOrDefault(Theme.DEFAULT)
+    /** Прозрачность интерфейса (окно «Тема»): поверхности слегка прозрачны — сквозь них виден фон. */
+    var translucent by bool("translucent", true)
 
     var tableMode by bool("table_mode", false)
     var treeMode by bool("tree_mode", false)

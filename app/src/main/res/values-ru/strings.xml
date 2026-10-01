@@ -71,8 +71,8 @@
     <string name="s_labels">Названия приложений вместо пакетов</string>
     <string name="s_appearance">Оформление</string>
     <string name="s_theme">Тема</string>
-    <string name="th_standard">Стандартная</string>
-    <string name="th_system">Как в системе (стандартная / светлая)</string>
+    <string name="th_standard">Тёмная</string>
+    <string name="th_system">Как в системе (тёмная / светлая)</string>
     <string name="th_amoled">AMOLED (чёрная)</string>
     <string name="th_light">Светлая</string>
     <string name="th_graphite">Графит</string>
@@ -305,4 +305,5 @@
     <string name="h_more">Меню: об устройстве, копирование сводки, настройки, режим доступа и другое.</string>
     <string name="h_mode_t">Режим доступа</string>
     <string name="h_mode">Как DroidTop видит процессы: как приложение (только свои), через Shizuku или с root (все). Нажмите, чтобы сменить.</string>
+    <string name="translucency">Прозрачность</string>
 </resources>
